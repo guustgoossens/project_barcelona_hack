@@ -42,12 +42,12 @@
 
 ## Our Stack & Unfair Advantages
 
-- **TRIBE v2** (Meta, open-source) — brain encoding model predicting neural responses to text. Deployed on B200 GPU via Northflank/CoreWeave.
+- **TRIBE v2** (Meta, open-source) — brain encoding model predicting neural responses to text. **Live on B200 GPU** via Northflank/CoreWeave. Returns 5 outreach-funnel brain scores per text input.
 - **Clay API** — profile database + enrichment
 - **Claude Sonnet 4.6** — email generation, persona building, reasoning
-- **Lovable** — vibe-coded frontend on top of Clay table
-- **B200 GPU (180GB VRAM)** via Northflank — enough to run TRIBE v2 at full precision
+- **B200 GPU (180GB VRAM)** via Northflank — TRIBE v2 running at full precision
 - **Anthropic + CoreWeave credits** (sponsors)
+- **Inference API**: `https://app--jupyter-pytorch--zr8brwblqp2q.code.run/predict`
 
 ## Our Project — NeuralReach
 
@@ -73,5 +73,7 @@
 - Platform: Northflank
 - GPU: 1x NVIDIA B200 (180GB VRAM)
 - Image: `northflank/public/jupyter-notebook:pytorch2.11.0-cuda12.9-cudnn9-devel`
-- Service URL: `app--jupyter-pytorch--zr8brwblqp2q.code.run`
-- Model weights: downloading via `hf download facebook/tribev2`
+- Inference server: `gpu/server.py` (clone-and-run on Northflank shell)
+- Public URL: `https://app--jupyter-pytorch--zr8brwblqp2q.code.run`
+- Runtime: PyTorch nightly CUDA 13.0 (`sm_100` for Blackwell)
+- Status: **live and verified**
