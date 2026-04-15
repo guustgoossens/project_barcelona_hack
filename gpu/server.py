@@ -57,8 +57,23 @@ def predict(req: Req, _=Depends(auth)):
         f.write(req.text)
         path = f.name
     df = model.get_events_dataframe(text_path=path)
-    preds, _ = model.predict(events=df)
+    preds, segments = model.predict(events=df)
     arr = np.asarray(preds, dtype=np.float32)
+    T = arr.shape[0]
+
+    # Split input text into T chunks for word-by-word animation.
+    # This is a display mapping, not a scientific alignment —
+    # good enough for the demo, crash-proof regardless of TRIBE internals.
+    text_words = req.text.split()
+    words = []
+    if T > 0 and len(text_words) > 0:
+        chunk = max(1, len(text_words) // T)
+        for i in range(T):
+            start = i * chunk
+            end = start + chunk if i < T - 1 else len(text_words)
+            words.append({"index": i, "text": " ".join(text_words[start:end])})
+    else:
+        words = [{"index": 0, "text": req.text}]
 
     mean = arr.mean(axis=1, keepdims=True)
     std = arr.std(axis=1, keepdims=True) + 1e-6
@@ -86,9 +101,23 @@ def predict(req: Req, _=Depends(auth)):
     b64 = base64.b64encode(arr.astype(np.float16).tobytes()).decode()
 
     m = lambda xs: float(np.mean(xs))
+
+    # Per-segment scores for word-by-word animation
+    segment_scores = []
+    for i in range(arr.shape[0]):
+        segment_scores.append({
+            "attention": attention[i],
+            "curiosity": curiosity[i],
+            "trust": trust[i],
+            "motivation": motivation[i],
+            "resistance": resistance[i],
+        })
+
     return {
         "shape": list(arr.shape), "dtype": "float16",
         "activations_b64_fp16": b64, "fps": 1, "hemodynamic_offset_s": 5,
+        "words": words,
+        "segments": segment_scores,
         "scores": {
             "attention": attention,
             "curiosity": curiosity,
