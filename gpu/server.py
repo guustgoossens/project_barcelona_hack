@@ -71,18 +71,31 @@ def predict(req: Req, _=Depends(auth)):
         if not masks: return np.zeros(arr.shape[0]).tolist()
         return z[:, np.logical_or.reduce(masks)].mean(axis=1).tolist()
 
-    curiosity = roi(["G_front_middle","G_front_inf-Triangul","S_intrapariet_and_P_trans","G_and_S_cingul-Ant"])
-    social = roi(["G_temporal_middle","G_pariet_inf-Angular","G_front_sup","S_temporal_sup"])
-    threat = roi(["G_insular_short","S_circular_insula_ant","G_front_inf-Opercular","G_and_S_cingul-Mid-Ant"])
+    # --- Outreach funnel scores ---
+    # Attention: "Will they stop scrolling?" → parietal superior + frontal eye fields
+    attention = roi(["G_pariet_inf-Supramar","S_intrapariet_and_P_trans","G_front_middle","S_front_sup"])
+    # Curiosity: "Will they read the whole thing?" → anterior cingulate (info-gap) + IFG (semantic salience)
+    curiosity = roi(["G_and_S_cingul-Ant","G_front_inf-Triangul","G_front_inf-Orbital","S_front_middle"])
+    # Trust: "Will they trust the sender?" → TPJ + angular + dmPFC + precuneus (theory of mind)
+    trust = roi(["G_temporal_middle","G_pariet_inf-Angular","G_front_sup","G_precuneus"])
+    # Motivation: "Will they want to reply?" → vmPFC + medial OFC + subcallosal (reward circuit)
+    motivation = roi(["G_rectus","S_suborbital","G_subcallosal","S_orbital_med-olfact","G_and_S_cingul-Ant"])
+    # Resistance: "Will their brain shut down?" → anterior insula + conflict regions
+    resistance = roi(["G_insular_short","S_circular_insula_ant","G_front_inf-Opercular","G_and_S_cingul-Mid-Ant"])
 
     b64 = base64.b64encode(arr.astype(np.float16).tobytes()).decode()
+
+    m = lambda xs: float(np.mean(xs))
     return {
         "shape": list(arr.shape), "dtype": "float16",
         "activations_b64_fp16": b64, "fps": 1, "hemodynamic_offset_s": 5,
         "scores": {
-            "curiosity": curiosity, "social": social, "threat": threat,
-            "valence": float(np.mean(curiosity) - np.mean(threat)),
-            "aggregate": float(np.mean(curiosity) + np.mean(social) - np.mean(threat)),
+            "attention": attention,
+            "curiosity": curiosity,
+            "trust": trust,
+            "motivation": motivation,
+            "resistance": resistance,
+            "overall": m(attention) + m(curiosity) + m(trust) + m(motivation) - 2 * m(resistance),
         }
     }
 
