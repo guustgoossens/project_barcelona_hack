@@ -1,0 +1,21 @@
+# node
+node_modules/
+.env.local
+.env
+dist/
+build/
+.vite/
+
+# convex
+frontend/convex/_generated/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+cache/
+backend/cache/
+
+# misc
+.DS_Store
+*.log
