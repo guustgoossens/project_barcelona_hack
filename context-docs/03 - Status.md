@@ -37,8 +37,10 @@
 - [x] HuggingFace auth + LLaMA 3.2-3B gated access
 - [x] Word-by-word segment mapping in API (`words[]` + `segments[]`)
 - [x] Frontend: Convex schema/action updated for 5 scores
-- [x] Frontend: ScoreBars shows 5 funnel scores
+- [x] Frontend: ScoreBars shows 5 funnel scores with running average per segment
 - [x] Frontend: WordStream component for word-by-word brain animation
+- [x] Frontend: Brain heatmap threshold — only top 20% activated vertices light up
+- [x] Frontend: BrainLegend color scale component
 
 ## What's still open
 

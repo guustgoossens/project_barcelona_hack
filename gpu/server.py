@@ -181,11 +181,7 @@ def predict(req: Req, _=Depends(auth)):
             "trust": trust,
             "motivation": motivation,
             "resistance": resistance,
-            "overall": m(attention)
-            + m(curiosity)
-            + m(trust)
-            + m(motivation)
-            - 2 * m(resistance),
+            "overall": m(attention) + m(curiosity) + m(trust) + m(motivation) - 2 * m(resistance),
         },
     }
 

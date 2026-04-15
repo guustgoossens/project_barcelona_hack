@@ -8,6 +8,7 @@ import Timeline from '../components/Timeline'
 import ScoreBars from '../components/ScoreBars'
 import BranchTree from '../components/BranchTree'
 import WordStream from '../components/WordStream'
+import BrainLegend from '../components/BrainLegend'
 import { fetchActivations, type ActivationMatrix } from '../lib/activations'
 
 export const Route = createFileRoute('/session/$id')({
@@ -46,12 +47,22 @@ function Session() {
   useEffect(() => {
     setMatrix(null)
     setTimestep(0)
+    console.log('[DEBUG] full variant:', {
+      hasUrl: !!full?.activationsUrl,
+      shape: full?.shape,
+      status: full?.status,
+      hasStorageId: !!full?.activationStorageId,
+    })
     if (!full || !full.activationsUrl || !full.shape) return
     const [T, V] = full.shape as [number, number]
+    console.log('[DEBUG] Fetching activations:', { url: full.activationsUrl, T, V })
     let cancelled = false
     fetchActivations(full.activationsUrl, [T, V])
-      .then((m) => !cancelled && setMatrix(m))
-      .catch((e) => console.error(e))
+      .then((m) => {
+        console.log('[DEBUG] Matrix loaded:', { T: m.T, V: m.V, dataLen: m.data.length })
+        if (!cancelled) setMatrix(m)
+      })
+      .catch((e) => console.error('[DEBUG] Activation fetch FAILED:', e))
     return () => {
       cancelled = true
     }
@@ -81,14 +92,19 @@ function Session() {
       <section className="flex flex-col">
         <div className="flex-1 relative">
           {matrix ? (
-            <Brain
-              meshUrl={MESH_URL}
-              activations={matrix}
-              timestep={timestep}
-              showLeft={showLeft}
-              showRight={showRight}
-              hemisphereSplit={HEMISPHERE_SPLIT}
-            />
+            <div className="w-full h-full flex">
+              <div className="flex-1">
+                <Brain
+                  meshUrl={MESH_URL}
+                  activations={matrix}
+                  timestep={timestep}
+                  showLeft={showLeft}
+                  showRight={showRight}
+                  hemisphereSplit={HEMISPHERE_SPLIT}
+                />
+              </div>
+              <BrainLegend />
+            </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-neutral-500">
               {selected?.status === 'scoring' || selected?.status === 'pending'
@@ -148,8 +164,35 @@ function Session() {
           </div>
         </div>
         <div>
-          <h2 className="text-sm font-semibold text-neutral-300 mb-2">Scores</h2>
-          <ScoreBars scores={selected?.scores ?? null} />
+          <h2 className="text-sm font-semibold text-neutral-300 mb-2">
+            {matrix ? `Brain scan — ${timestep + 1}/${matrix.T}` : "Scores"}
+          </h2>
+          <ScoreBars
+            scores={
+              selected?.scoreSeries && matrix
+                ? (() => {
+                    const t = Math.min(timestep, matrix.T - 1);
+                    const avg = (arr: number[]) => {
+                      const slice = arr.slice(0, t + 1);
+                      return slice.reduce((a, b) => a + b, 0) / slice.length;
+                    };
+                    const a = avg(selected.scoreSeries.attention);
+                    const c = avg(selected.scoreSeries.curiosity);
+                    const tr = avg(selected.scoreSeries.trust);
+                    const mo = avg(selected.scoreSeries.motivation);
+                    const r = avg(selected.scoreSeries.resistance);
+                    return {
+                      attention: a,
+                      curiosity: c,
+                      trust: tr,
+                      motivation: mo,
+                      resistance: r,
+                      overall: a + c + tr + mo - 2 * r,
+                    };
+                  })()
+                : selected?.scores ?? null
+            }
+          />
         </div>
       </aside>
     </div>

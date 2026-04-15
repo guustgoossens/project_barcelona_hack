@@ -76,7 +76,10 @@ Dashboard — 3D brain heatmap + score bars + variant comparison
 
 ## The Demo Moment
 
-**Word-by-word brain scan**: the email text appears progressively, and for each word group the 3D brain heatmap updates in real time — attention regions light up, trust builds, resistance spikes on a bad phrase. The judge watches the brain "read" the email live.
+**Word-by-word brain scan**: the email text appears progressively. For each word group:
+- The 3D brain heatmap updates — only the top 20% activated regions light up (rest stays dark)
+- The 5 score bars show the **running average** up to that point — scores build up as the brain "reads"
+- If the email has a bad phrase, the scores visibly drop in real time as the average absorbs it
 
 Then switch to variant B — different wording, different brain response. Pick the one with the highest overall score. Send it.
 
