@@ -77,8 +77,9 @@ This matches Clay judge Yash's explicit hint that the use case doesn't have to b
 | Profile data | Clay API |
 | Persona + email generation | Claude Sonnet 4.6 (Anthropic credits) |
 | Brain scoring | TRIBE v2 (facebook/tribev2 on HuggingFace) |
-| GPU compute | B200 180GB via Northflank/CoreWeave |
-| Frontend / dashboard | Lovable (vibe-coded on Clay table) |
+| GPU compute | Northflank on CoreWeave B200 180GB; image `northflank/public/jupyter-notebook:pytorch2.11.0-cuda12.9-cudnn9-devel` (Google Artifact Registry) |
+| Frontend | TanStack Start + React Three Fiber |
+| DB + realtime | Convex (`abundant-buffalo-304`, eu-west-1) |
 | Outreach sending | Clay native |
 
 ## Scope — 24h constraint
