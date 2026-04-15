@@ -10,7 +10,7 @@
 
 ## One-Liner
 
-The first outreach system powered by Meta's brain encoding model (TRIBE v2). Generates multiple email variants per candidate, runs them through a neural simulation to predict brain activation in curiosity and openness regions, and sends the version most likely to get a response.
+The first outreach system powered by Meta's brain encoding model (TRIBE v2). Generates multiple email variants per candidate, scores each on 5 neural engagement signals (attention, curiosity, trust, motivation, resistance), and sends the version the brain responds to best.
 
 ## The Core Insight
 
@@ -76,7 +76,9 @@ Dashboard — 3D brain heatmap + score bars + variant comparison
 
 ## The Demo Moment
 
-Show the brain activation heatmap changing as TRIBE v2 evaluates each email variant. One variant lights up curiosity regions. Another triggers avoidance. We send the first one.
+**Word-by-word brain scan**: the email text appears progressively, and for each word group the 3D brain heatmap updates in real time — attention regions light up, trust builds, resistance spikes on a bad phrase. The judge watches the brain "read" the email live.
+
+Then switch to variant B — different wording, different brain response. Pick the one with the highest overall score. Send it.
 
 **The line judges will remember**: *"We don't A/B test with click rates. We test with the human brain before we send."*
 
