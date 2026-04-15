@@ -8,8 +8,8 @@
 
 | Area | Path | State |
 |---|---|---|
-| Frontend | `frontend/` | TanStack Start + R3F. Routes `/`, `/session/$id`. Components: Brain, Timeline, ScoreBars, BranchTree. Libs: colormap, activations, convex client. |
-| Convex | `frontend/convex/` | Schema (`sessions`, `variants` w/ parent-child), queries/mutations (`createRoot`, `createChild`, `archive`, `list`, `get`, `patchScoring`), action (`scoreVariant`) calling Python. |
+| Frontend | `frontend/` | TanStack Start + R3F. Routes `/`, `/session/$id`. Components: Brain, Timeline, ScoreBars (5 funnel scores), BranchTree, WordStream (word-by-word animation). Libs: colormap, activations, convex client. |
+| Convex | `frontend/convex/` | Schema (`sessions`, `variants` w/ 5-score format), queries/mutations, action (`scoreVariant`) calling GPU API. Scores: attention, curiosity, trust, motivation, resistance, overall. |
 | GPU inference (live) | `gpu/server.py` | Minimal FastAPI `/predict` on Northflank B200. Returns base64 fp16 `(T, 20484)` + 5 outreach-funnel scores (attention, curiosity, trust, motivation, resistance) via Destrieux atlas. **Live at `https://app--jupyter-pytorch--zr8brwblqp2q.code.run`**. |
 | Python inference (full) | `backend/` | FastAPI `/predict` (text) + `/predict/media` (audio/video). Not deployed yet — `gpu/server.py` is the running version. |
 | Brain mesh | `scripts/export_mesh.py` | fsaverage5 → single GLB, 20,484 verts, + `mesh_meta.json`. Not run yet. |
@@ -35,6 +35,10 @@
 - [x] Destrieux atlas parcels verified against neuroscience literature
 - [x] Model differentiates generic vs personalized emails (overall: -1.87 vs -0.56)
 - [x] HuggingFace auth + LLaMA 3.2-3B gated access
+- [x] Word-by-word segment mapping in API (`words[]` + `segments[]`)
+- [x] Frontend: Convex schema/action updated for 5 scores
+- [x] Frontend: ScoreBars shows 5 funnel scores
+- [x] Frontend: WordStream component for word-by-word brain animation
 
 ## What's still open
 
@@ -42,8 +46,6 @@
 - [ ] Run `scripts/export_mesh.py` → copy `assets/fsaverage5.glb` to `frontend/public/`
 - [ ] Clay API integration — pull profiles, generate variants, score, send
 - [ ] Persona-weighted scoring — pass persona type in request, adjust score weights
-- [ ] 3D brain heatmap visualization in frontend
-- [ ] Update Convex action to handle 5 scores (currently expects curiosity/social/threat)
 
 ## Northflank setup notes
 
@@ -88,8 +90,9 @@ cd backend && uvicorn app.main:app --reload
 
 1. Home page: paste a cold email → **Start session**.
 2. Session page: 3-pane — branch tree (left), 3D brain + timeline (center), message + score bars (right).
-3. Prune weak variants, duplicate-and-mutate strong ones, watch scores improve across generations.
-4. Pitch line: "We don't A/B test with click rates. We test with the human brain before we send."
+3. **Word-by-word playback**: email text highlights progressively, brain heatmap updates per segment, 5 score bars animate in sync.
+4. Prune weak variants, duplicate-and-mutate strong ones, watch scores improve across generations.
+5. Pitch line: "We don't A/B test with click rates. We test with the human brain before we send."
 
 ## Post-hackathon
 

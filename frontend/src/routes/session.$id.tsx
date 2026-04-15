@@ -7,6 +7,7 @@ import Brain from '../components/Brain'
 import Timeline from '../components/Timeline'
 import ScoreBars from '../components/ScoreBars'
 import BranchTree from '../components/BranchTree'
+import WordStream from '../components/WordStream'
 import { fetchActivations, type ActivationMatrix } from '../lib/activations'
 
 export const Route = createFileRoute('/session/$id')({
@@ -132,8 +133,18 @@ function Session() {
       <aside className="border-l border-neutral-900 overflow-y-auto p-3 space-y-4">
         <div>
           <h2 className="text-sm font-semibold text-neutral-300 mb-2">Message</h2>
-          <div className="text-xs text-neutral-300 bg-neutral-900 border border-neutral-800 rounded p-2 whitespace-pre-wrap">
-            {selected?.message ?? '—'}
+          <div className="bg-neutral-900 border border-neutral-800 rounded p-2">
+            {selected?.message && matrix ? (
+              <WordStream
+                message={selected.message}
+                T={matrix.T}
+                timestep={timestep}
+              />
+            ) : (
+              <div className="text-xs text-neutral-300 whitespace-pre-wrap">
+                {selected?.message ?? '—'}
+              </div>
+            )}
           </div>
         </div>
         <div>
