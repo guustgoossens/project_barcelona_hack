@@ -1,15 +1,18 @@
 type Scores = {
+  attention: number;
   curiosity: number;
-  social: number;
-  threat: number;
-  valence: number;
-  aggregate: number;
+  trust: number;
+  motivation: number;
+  resistance: number;
+  overall: number;
 };
 
 const ROWS: { key: keyof Scores; label: string; tone: "good" | "bad" | "neutral" }[] = [
+  { key: "attention", label: "Attention", tone: "good" },
   { key: "curiosity", label: "Curiosity", tone: "good" },
-  { key: "social", label: "Social cognition", tone: "good" },
-  { key: "threat", label: "Threat / avoidance", tone: "bad" },
+  { key: "trust", label: "Trust", tone: "good" },
+  { key: "motivation", label: "Motivation", tone: "good" },
+  { key: "resistance", label: "Resistance", tone: "bad" },
 ];
 
 function bar(v: number, tone: "good" | "bad" | "neutral") {
@@ -39,8 +42,8 @@ export default function ScoreBars({ scores }: { scores: Scores | null }) {
         </div>
       ))}
       <div className="pt-1 mt-1 border-t border-neutral-800 text-xs text-neutral-400 flex justify-between">
-        <span>Aggregate</span>
-        <span className="font-mono text-neutral-200">{scores.aggregate.toFixed(2)}</span>
+        <span>Overall</span>
+        <span className="font-mono text-neutral-200">{scores.overall.toFixed(2)}</span>
       </div>
     </div>
   );

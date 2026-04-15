@@ -32,7 +32,8 @@ function Index() {
         <h1 className="text-3xl font-semibold">NeuralReach — brain-scored outreach</h1>
         <p className="text-neutral-400 text-sm">
           Write a message. We run it through Meta TRIBE v2, predict cortical activation at
-          20,484 vertices, and score it for curiosity, social cognition, and threat.
+          20,484 vertices, and score it across the outreach funnel: attention,
+          curiosity, trust, motivation, and resistance.
         </p>
         <input
           className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 rounded"

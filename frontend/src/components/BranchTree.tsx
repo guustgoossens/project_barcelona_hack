@@ -82,7 +82,7 @@ function NodeView({
           </span>
           {node.scores && (
             <span className="text-xs font-mono text-emerald-400">
-              {node.scores.aggregate.toFixed(2)}
+              {node.scores.overall.toFixed(2)}
             </span>
           )}
         </div>

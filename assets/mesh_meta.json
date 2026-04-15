@@ -1,0 +1,20 @@
+{
+  "vertex_count": 20484,
+  "lh_vertex_count": 10242,
+  "rh_vertex_count": 10242,
+  "hemisphere_split_index": 10242,
+  "bounding_box": {
+    "min": [
+      -68.78880310058594,
+      -104.69203186035156,
+      -48.39225387573242
+    ],
+    "max": [
+      69.846435546875,
+      69.1561050415039,
+      79.21095275878906
+    ]
+  },
+  "fps": 1,
+  "hemodynamic_offset_s": 5
+}
