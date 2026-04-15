@@ -16,7 +16,10 @@ def _get_model():
         from tribev2 import TribeModel  # type: ignore
 
         cache = os.environ.get("TRIBE_CACHE", "./cache")
-        _model = TribeModel.from_pretrained("facebook/tribev2", cache_folder=cache)
+        device = os.environ.get("TRIBE_DEVICE", "cuda")
+        _model = TribeModel.from_pretrained(
+            "facebook/tribev2", cache_folder=cache, device=device
+        )
     return _model
 
 
