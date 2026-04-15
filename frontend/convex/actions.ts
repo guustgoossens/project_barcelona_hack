@@ -37,11 +37,12 @@ export const scoreVariant = action({
         fps: number;
         hemodynamic_offset_s: number;
         scores: {
+          attention: number[];
           curiosity: number[];
-          social: number[];
-          threat: number[];
-          aggregate: number;
-          valence: number;
+          trust: number[];
+          motivation: number[];
+          resistance: number[];
+          overall: number;
         };
       };
 
@@ -63,16 +64,19 @@ export const scoreVariant = action({
         fps: payload.fps,
         hemodynamicOffsetS: payload.hemodynamic_offset_s,
         scores: {
+          attention: mean(payload.scores.attention),
           curiosity: mean(payload.scores.curiosity),
-          social: mean(payload.scores.social),
-          threat: mean(payload.scores.threat),
-          valence: payload.scores.valence,
-          aggregate: payload.scores.aggregate,
+          trust: mean(payload.scores.trust),
+          motivation: mean(payload.scores.motivation),
+          resistance: mean(payload.scores.resistance),
+          overall: payload.scores.overall,
         },
         scoreSeries: {
+          attention: payload.scores.attention,
           curiosity: payload.scores.curiosity,
-          social: payload.scores.social,
-          threat: payload.scores.threat,
+          trust: payload.scores.trust,
+          motivation: payload.scores.motivation,
+          resistance: payload.scores.resistance,
         },
       });
     } catch (e: any) {

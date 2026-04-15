@@ -102,18 +102,21 @@ export const patchScoring = mutation({
     hemodynamicOffsetS: v.optional(v.number()),
     scores: v.optional(
       v.object({
+        attention: v.number(),
         curiosity: v.number(),
-        social: v.number(),
-        threat: v.number(),
-        valence: v.number(),
-        aggregate: v.number(),
+        trust: v.number(),
+        motivation: v.number(),
+        resistance: v.number(),
+        overall: v.number(),
       }),
     ),
     scoreSeries: v.optional(
       v.object({
+        attention: v.array(v.number()),
         curiosity: v.array(v.number()),
-        social: v.array(v.number()),
-        threat: v.array(v.number()),
+        trust: v.array(v.number()),
+        motivation: v.array(v.number()),
+        resistance: v.array(v.number()),
       }),
     ),
     error: v.optional(v.string()),
