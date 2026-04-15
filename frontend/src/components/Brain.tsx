@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useMemo } from "react";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
-import { writeVertexColors } from "../lib/colormap";
+import { writeVertexColors, computeThreshold } from "../lib/colormap";
 import type { ActivationMatrix } from "../lib/activations";
 
 type Props = {
@@ -23,7 +24,6 @@ function BrainMesh({
   hemisphereSplit,
 }: Props) {
   const gltf = useGLTF(meshUrl);
-  const meshRef = useRef<THREE.Mesh>(null);
 
   const geometry = useMemo(() => {
     let geom: THREE.BufferGeometry | null = null;
@@ -35,30 +35,27 @@ function BrainMesh({
     if (!geom) throw new Error("no geometry in glb");
     const g = geom as THREE.BufferGeometry;
     const n = g.attributes.position.count;
-    if (!g.attributes.color) {
-      g.setAttribute(
-        "color",
-        new THREE.BufferAttribute(new Float32Array(n * 3).fill(0.7), 3),
-      );
+    const colorArr = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      colorArr[i * 3 + 0] = 0.04;
+      colorArr[i * 3 + 1] = 0.03;
+      colorArr[i * 3 + 2] = 0.08;
     }
+    g.setAttribute("color", new THREE.BufferAttribute(colorArr, 3));
+    g.computeVertexNormals();
     return g;
   }, [gltf]);
 
-  // Bounds for colormap scaling — computed once over whole matrix.
+  // Compute threshold per timestep so only top 20% of vertices light up
   const bounds = useMemo(() => {
-    if (!activations) return { min: 0, max: 1 };
-    let min = Infinity;
-    let max = -Infinity;
-    const d = activations.data;
-    for (let i = 0; i < d.length; i++) {
-      const v = d[i];
-      if (v < min) min = v;
-      if (v > max) max = v;
-    }
-    return { min, max };
-  }, [activations]);
+    if (!activations) return { threshold: 0, max: 1 };
+    const { T, V, data } = activations;
+    const t = Math.min(timestep, T - 1);
+    const slice = data.subarray(t * V, (t + 1) * V);
+    return computeThreshold(slice, 20);
+  }, [activations, timestep]);
 
-  useFrame(() => {
+  useEffect(() => {
     if (!activations) return;
     const { T, V, data } = activations;
     const t = Math.min(timestep, T - 1);
@@ -66,30 +63,30 @@ function BrainMesh({
 
     const colorAttr = geometry.attributes.color as THREE.BufferAttribute;
     const colors = colorAttr.array as Float32Array;
-    writeVertexColors(colors, slice, bounds.min, bounds.max);
+    const count = Math.min(V, geometry.attributes.position.count);
 
-    // Hemisphere masking: push hidden verts to black and below the surface
-    // via color only (keeping geometry intact for simplicity).
+    writeVertexColors(colors, slice.subarray(0, count), bounds.threshold, bounds.max);
+
     if (!showLeft) {
       for (let i = 0; i < hemisphereSplit; i++) {
-        colors[i * 3 + 0] = 0.08;
-        colors[i * 3 + 1] = 0.08;
-        colors[i * 3 + 2] = 0.10;
+        colors[i * 3 + 0] = 0.04;
+        colors[i * 3 + 1] = 0.03;
+        colors[i * 3 + 2] = 0.08;
       }
     }
     if (!showRight) {
-      for (let i = hemisphereSplit; i < V; i++) {
-        colors[i * 3 + 0] = 0.08;
-        colors[i * 3 + 1] = 0.08;
-        colors[i * 3 + 2] = 0.10;
+      for (let i = hemisphereSplit; i < count; i++) {
+        colors[i * 3 + 0] = 0.04;
+        colors[i * 3 + 1] = 0.03;
+        colors[i * 3 + 2] = 0.08;
       }
     }
     colorAttr.needsUpdate = true;
-  });
+  }, [activations, timestep, bounds, geometry, showLeft, showRight, hemisphereSplit]);
 
   return (
-    <mesh ref={meshRef} geometry={geometry}>
-      <meshStandardMaterial vertexColors flatShading={false} roughness={0.6} />
+    <mesh geometry={geometry}>
+      <meshStandardMaterial vertexColors roughness={0.5} metalness={0.0} />
     </mesh>
   );
 }
@@ -98,14 +95,30 @@ export default function Brain(props: Props) {
   return (
     <Canvas
       camera={{ position: [0, 0, 200], fov: 45 }}
-      dpr={[1, 2]}
-      style={{ background: "#0b0d12" }}
+      dpr={[1, 1.5]}
+      frameloop="always"
+      gl={{ antialias: true }}
+      style={{ background: "#06060f" }}
     >
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[50, 80, 100]} intensity={0.8} />
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[60, 80, 100]} intensity={0.9} />
       <directionalLight position={[-80, -40, 60]} intensity={0.3} />
       <BrainMesh {...props} />
-      <OrbitControls enableDamping makeDefault />
+      <OrbitControls
+        autoRotate
+        autoRotateSpeed={0.3}
+        enableDamping
+        dampingFactor={0.05}
+        makeDefault
+      />
+      <EffectComposer>
+        <Bloom
+          luminanceThreshold={0.25}
+          luminanceSmoothing={0.9}
+          intensity={0.7}
+          mipmapBlur
+        />
+      </EffectComposer>
     </Canvas>
   );
 }

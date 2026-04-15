@@ -24,7 +24,11 @@ export default function Timeline({
     const step = (now: number) => {
       if (now - last.current > 1000 / fps) {
         last.current = now;
-        setTimestep((timestep + 1) % T);
+        if (timestep >= T - 1) {
+          setPlaying(false);
+          return;
+        }
+        setTimestep(timestep + 1);
       }
       raf.current = requestAnimationFrame(step);
     };

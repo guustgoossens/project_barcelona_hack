@@ -8,6 +8,7 @@ import Timeline from '../components/Timeline'
 import ScoreBars from '../components/ScoreBars'
 import BranchTree from '../components/BranchTree'
 import WordStream from '../components/WordStream'
+import BrainLegend from '../components/BrainLegend'
 import { fetchActivations, type ActivationMatrix } from '../lib/activations'
 
 export const Route = createFileRoute('/session/$id')({
@@ -50,8 +51,10 @@ function Session() {
     const [T, V] = full.shape as [number, number]
     let cancelled = false
     fetchActivations(full.activationsUrl, [T, V])
-      .then((m) => !cancelled && setMatrix(m))
-      .catch((e) => console.error(e))
+      .then((m) => {
+        if (!cancelled) setMatrix(m)
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -66,7 +69,7 @@ function Session() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] bg-neutral-950 text-neutral-100 grid grid-cols-[320px_1fr_280px]">
+    <div className="h-[calc(100vh-5rem)] bg-neutral-950 text-neutral-100 grid grid-cols-[320px_1fr_280px]">
       <aside className="border-r border-neutral-900 overflow-y-auto p-3">
         <h2 className="text-sm font-semibold mb-3 text-neutral-300">Variants</h2>
         <BranchTree
@@ -81,14 +84,19 @@ function Session() {
       <section className="flex flex-col">
         <div className="flex-1 relative">
           {matrix ? (
-            <Brain
-              meshUrl={MESH_URL}
-              activations={matrix}
-              timestep={timestep}
-              showLeft={showLeft}
-              showRight={showRight}
-              hemisphereSplit={HEMISPHERE_SPLIT}
-            />
+            <div className="w-full h-full flex">
+              <div className="flex-1">
+                <Brain
+                  meshUrl={MESH_URL}
+                  activations={matrix}
+                  timestep={timestep}
+                  showLeft={showLeft}
+                  showRight={showRight}
+                  hemisphereSplit={HEMISPHERE_SPLIT}
+                />
+              </div>
+              <BrainLegend />
+            </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-neutral-500">
               {selected?.status === 'scoring' || selected?.status === 'pending'
@@ -148,8 +156,44 @@ function Session() {
           </div>
         </div>
         <div>
-          <h2 className="text-sm font-semibold text-neutral-300 mb-2">Scores</h2>
-          <ScoreBars scores={selected?.scores ?? null} />
+          <h2 className="text-sm font-semibold text-neutral-300 mb-2">
+            {matrix ? `Brain scan — ${timestep + 1}/${matrix.T}` : "Scores"}
+          </h2>
+          <ScoreBars
+            scores={
+              selected?.scoreSeries && matrix
+                ? (() => {
+                    const t = Math.min(timestep, matrix.T - 1);
+                    // Primacy-peak-recency: 40% mean + 20% first + 20% worst + 20% current
+                    const aggPos = (arr: number[]) => {
+                      const s = arr.slice(0, t + 1);
+                      if (!s.length) return 0;
+                      const m = s.reduce((a, b) => a + b, 0) / s.length;
+                      return 0.4 * m + 0.2 * s[0] + 0.2 * Math.min(...s) + 0.2 * s[s.length - 1];
+                    };
+                    const aggNeg = (arr: number[]) => {
+                      const s = arr.slice(0, t + 1);
+                      if (!s.length) return 0;
+                      const m = s.reduce((a, b) => a + b, 0) / s.length;
+                      return 0.4 * m + 0.2 * s[0] + 0.2 * Math.max(...s) + 0.2 * s[s.length - 1];
+                    };
+                    const a = aggPos(selected.scoreSeries.attention);
+                    const c = aggPos(selected.scoreSeries.curiosity);
+                    const tr = aggPos(selected.scoreSeries.trust);
+                    const mo = aggPos(selected.scoreSeries.motivation);
+                    const r = aggNeg(selected.scoreSeries.resistance);
+                    return {
+                      attention: a,
+                      curiosity: c,
+                      trust: tr,
+                      motivation: mo,
+                      resistance: r,
+                      overall: a + c + tr + mo - 2 * r,
+                    };
+                  })()
+                : selected?.scores ?? null
+            }
+          />
         </div>
       </aside>
     </div>

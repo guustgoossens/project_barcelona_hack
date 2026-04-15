@@ -87,10 +87,9 @@ def predict(req: Req, _=Depends(auth)):
     text_words = req.text.split()
     words = []
     if T > 0 and len(text_words) > 0:
-        chunk = max(1, len(text_words) // T)
         for i in range(T):
-            start = i * chunk
-            end = start + chunk if i < T - 1 else len(text_words)
+            start = round(i * len(text_words) / T)
+            end = round((i + 1) * len(text_words) / T)
             words.append({"index": i, "text": " ".join(text_words[start:end])})
     else:
         words = [{"index": 0, "text": req.text}]
@@ -137,7 +136,6 @@ def predict(req: Req, _=Depends(auth)):
             "S_suborbital",
             "G_subcallosal",
             "S_orbital_med-olfact",
-            "G_and_S_cingul-Ant",
         ]
     )
     # Resistance: "Will their brain shut down?" → anterior insula + conflict regions
@@ -152,7 +150,18 @@ def predict(req: Req, _=Depends(auth)):
 
     b64 = base64.b64encode(arr.astype(np.float16).tobytes()).decode()
 
-    m = lambda xs: float(np.mean(xs))
+    # Primacy-peak-recency aggregation: first impression, worst moment,
+    # and last impression weigh disproportionately (Kahneman).
+    # 40% mean + 20% first + 20% worst + 20% last.
+    def agg_pos(xs):
+        if not xs: return 0.0
+        m = float(np.mean(xs))
+        return 0.4 * m + 0.2 * float(xs[0]) + 0.2 * float(min(xs)) + 0.2 * float(xs[-1])
+
+    def agg_neg(xs):
+        if not xs: return 0.0
+        m = float(np.mean(xs))
+        return 0.4 * m + 0.2 * float(xs[0]) + 0.2 * float(max(xs)) + 0.2 * float(xs[-1])
 
     # Per-segment scores for word-by-word animation
     segment_scores = []
@@ -181,11 +190,7 @@ def predict(req: Req, _=Depends(auth)):
             "trust": trust,
             "motivation": motivation,
             "resistance": resistance,
-            "overall": m(attention)
-            + m(curiosity)
-            + m(trust)
-            + m(motivation)
-            - 2 * m(resistance),
+            "overall": agg_pos(attention) + agg_pos(curiosity) + agg_pos(trust) + agg_pos(motivation) - 2 * agg_neg(resistance),
         },
     }
 

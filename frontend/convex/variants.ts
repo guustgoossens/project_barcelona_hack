@@ -1,4 +1,5 @@
-import { mutation, query, QueryCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
+import type { QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
