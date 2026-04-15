@@ -19,3 +19,9 @@ backend/cache/
 # misc
 .DS_Store
 *.log
+
+# per-developer / generated
+.vscode/
+frontend/.agents/
+frontend/.claude/
+frontend/src/routeTree.gen.ts
