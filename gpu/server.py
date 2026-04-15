@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
-TOKEN = os.environ.get("INFERENCE_TOKEN", "changeme")
+TOKEN = os.environ.get("INFERENCE_TOKEN", "")
 
 _model = None
 def get_model():
@@ -23,6 +23,8 @@ def get_model():
     return _model
 
 def auth(authorization: str | None = Header(None)):
+    if not TOKEN:
+        return  # no token set = open access (hackathon mode)
     if authorization != f"Bearer {TOKEN}":
         raise HTTPException(401)
 
