@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { writeVertexColors, computeThreshold } from "../lib/colormap";
 import type { ActivationMatrix } from "../lib/activations";
@@ -94,16 +95,30 @@ export default function Brain(props: Props) {
   return (
     <Canvas
       camera={{ position: [0, 0, 200], fov: 45 }}
-      dpr={1}
-      frameloop="demand"
-      gl={{ antialias: false, powerPreference: "low-power" }}
+      dpr={[1, 1.5]}
+      frameloop="always"
+      gl={{ antialias: true }}
       style={{ background: "#06060f" }}
     >
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[60, 80, 100]} intensity={1.0} />
-      <directionalLight position={[-80, -40, 60]} intensity={0.4} />
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[60, 80, 100]} intensity={0.9} />
+      <directionalLight position={[-80, -40, 60]} intensity={0.3} />
       <BrainMesh {...props} />
-      <OrbitControls enableDamping={false} makeDefault />
+      <OrbitControls
+        autoRotate
+        autoRotateSpeed={0.3}
+        enableDamping
+        dampingFactor={0.05}
+        makeDefault
+      />
+      <EffectComposer>
+        <Bloom
+          luminanceThreshold={0.25}
+          luminanceSmoothing={0.9}
+          intensity={0.7}
+          mipmapBlur
+        />
+      </EffectComposer>
     </Canvas>
   );
 }

@@ -34,12 +34,15 @@ Run all 3 through TRIBE v2 on our B200 GPU. Show the brain activation heatmap fo
 Variant C goes out via Clay. Dashboard updates.
 
 ### 4. Technical reveal (20s)
-"TRIBE v2 is Meta's open-source brain encoding model, trained on 500+ hours of fMRI recordings. It predicts neural activity across 70,000 brain voxels in response to text. We run it on a CoreWeave B200 — 180GB VRAM. Inference in under 5 seconds per email. We map voxel activations to known emotion and curiosity regions from neuroscience literature."
+"TRIBE v2 is Meta's open-source brain encoding model, trained on 500+ hours of fMRI recordings. It predicts neural activity across 20,000 cortical vertices in response to text. We run it on a CoreWeave B200 — 180GB VRAM. Inference in under 5 seconds per email."
 
-### 5. Business (15s)
-"Every GTM team is trying to personalize at scale. Nobody is personalizing for the brain. We're not optimizing for open rates — we're optimizing for neural engagement before the email is sent."
+### 5. The scoring insight (15s)
+"We don't just average the brain response. We apply Kahneman's **peak-end rule**: your brain disproportionately remembers three things — the first impression, the worst moment, and the last thing you read. Our scoring weights all three. One bad sentence at the end of a perfect email? The score crashes. Because that's what the brain does."
 
-### 6. Close (5s)
+### 6. Business (10s)
+"Every GTM team is trying to personalize at scale. Nobody is scoring for what the brain actually retains. We're not optimizing for open rates — we're optimizing for neural memory before the email is sent."
+
+### 7. Close (5s)
 "We don't A/B test with click rates. We test with the human brain."
 
 ---
@@ -54,8 +57,9 @@ Variant C goes out via Clay. Dashboard updates.
 
 | Q | A |
 |---|---|
-| "Is there proof brain activation correlates with reply rates?" | "TRIBE explicitly models emotion and social cognition regions — the same regions that drive human decision to respond. We're running it as a proxy for engagement likelihood. It's a bet on neuroscience, not a proven correlation yet — but it's a better bet than synonym-swapping an email template." |
+| "Is there proof brain activation correlates with reply rates?" | "TRIBE explicitly models emotion and social cognition regions — the same regions that drive human decision to respond. And our scoring applies Kahneman's peak-end rule — the most replicated finding in behavioral memory research. We're combining neuroscience with behavioral economics." |
 | "Couldn't you just prompt engineer better?" | "Yes — and we do that too. TRIBE is the scoring layer on top of good prompting. Two levels of optimization." |
+| "What's the peak-end rule?" | "Kahneman & Fredrickson, 1993. People don't judge experiences by the average — they remember the peak (best or worst moment), the beginning, and the end. We weight our brain scores the same way: 40% mean, 20% first impression, 20% worst moment, 20% last impression. One toxic sentence tanks the score — exactly like it tanks your reply rate." |
 | "How fast is inference?" | "Under 5 seconds per email on B200." |
 | "What does TRIBE actually output?" | "70,000 voxel activation predictions. We aggregate the voxels mapped to curiosity, emotion, and social cognition regions — documented in the TRIBE v2 paper." |
 | "Why Clay specifically?" | "Clay's database + enrichment gives us the signal to build accurate personas. The richer the persona, the more targeted the email variants." |

@@ -53,8 +53,17 @@ export const scoreVariant = action({
         new Blob([bytes], { type: "application/octet-stream" }),
       );
 
-      const mean = (xs: number[]) =>
-        xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0;
+      // Primacy-peak-recency: 40% mean + 20% first + 20% worst + 20% last
+      const aggPos = (xs: number[]) => {
+        if (!xs.length) return 0;
+        const m = xs.reduce((a, b) => a + b, 0) / xs.length;
+        return 0.4 * m + 0.2 * xs[0] + 0.2 * Math.min(...xs) + 0.2 * xs[xs.length - 1];
+      };
+      const aggNeg = (xs: number[]) => {
+        if (!xs.length) return 0;
+        const m = xs.reduce((a, b) => a + b, 0) / xs.length;
+        return 0.4 * m + 0.2 * xs[0] + 0.2 * Math.max(...xs) + 0.2 * xs[xs.length - 1];
+      };
 
       await ctx.runMutation(api.variants.patchScoring, {
         id: variantId,
@@ -64,11 +73,11 @@ export const scoreVariant = action({
         fps: payload.fps,
         hemodynamicOffsetS: payload.hemodynamic_offset_s,
         scores: {
-          attention: mean(payload.scores.attention),
-          curiosity: mean(payload.scores.curiosity),
-          trust: mean(payload.scores.trust),
-          motivation: mean(payload.scores.motivation),
-          resistance: mean(payload.scores.resistance),
+          attention: aggPos(payload.scores.attention),
+          curiosity: aggPos(payload.scores.curiosity),
+          trust: aggPos(payload.scores.trust),
+          motivation: aggPos(payload.scores.motivation),
+          resistance: aggNeg(payload.scores.resistance),
           overall: payload.scores.overall,
         },
         scoreSeries: {

@@ -14,12 +14,11 @@ export default function WordStream({ message, T, timestep }: Props) {
     return <div className="text-xs text-neutral-300 whitespace-pre-wrap">{message}</div>;
   }
 
-  // Same chunking logic as gpu/server.py
-  const chunk = Math.max(1, Math.floor(textWords.length / T));
+  // Even distribution — same logic as gpu/server.py
   const chunks: string[] = [];
   for (let i = 0; i < T; i++) {
-    const start = i * chunk;
-    const end = i < T - 1 ? start + chunk : textWords.length;
+    const start = Math.round((i * textWords.length) / T);
+    const end = Math.round(((i + 1) * textWords.length) / T);
     chunks.push(textWords.slice(start, end).join(" "));
   }
 

@@ -47,22 +47,14 @@ function Session() {
   useEffect(() => {
     setMatrix(null)
     setTimestep(0)
-    console.log('[DEBUG] full variant:', {
-      hasUrl: !!full?.activationsUrl,
-      shape: full?.shape,
-      status: full?.status,
-      hasStorageId: !!full?.activationStorageId,
-    })
     if (!full || !full.activationsUrl || !full.shape) return
     const [T, V] = full.shape as [number, number]
-    console.log('[DEBUG] Fetching activations:', { url: full.activationsUrl, T, V })
     let cancelled = false
     fetchActivations(full.activationsUrl, [T, V])
       .then((m) => {
-        console.log('[DEBUG] Matrix loaded:', { T: m.T, V: m.V, dataLen: m.data.length })
         if (!cancelled) setMatrix(m)
       })
-      .catch((e) => console.error('[DEBUG] Activation fetch FAILED:', e))
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -77,7 +69,7 @@ function Session() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] bg-neutral-950 text-neutral-100 grid grid-cols-[320px_1fr_280px]">
+    <div className="h-[calc(100vh-5rem)] bg-neutral-950 text-neutral-100 grid grid-cols-[320px_1fr_280px]">
       <aside className="border-r border-neutral-900 overflow-y-auto p-3">
         <h2 className="text-sm font-semibold mb-3 text-neutral-300">Variants</h2>
         <BranchTree
@@ -172,15 +164,24 @@ function Session() {
               selected?.scoreSeries && matrix
                 ? (() => {
                     const t = Math.min(timestep, matrix.T - 1);
-                    const avg = (arr: number[]) => {
-                      const slice = arr.slice(0, t + 1);
-                      return slice.reduce((a, b) => a + b, 0) / slice.length;
+                    // Primacy-peak-recency: 40% mean + 20% first + 20% worst + 20% current
+                    const aggPos = (arr: number[]) => {
+                      const s = arr.slice(0, t + 1);
+                      if (!s.length) return 0;
+                      const m = s.reduce((a, b) => a + b, 0) / s.length;
+                      return 0.4 * m + 0.2 * s[0] + 0.2 * Math.min(...s) + 0.2 * s[s.length - 1];
                     };
-                    const a = avg(selected.scoreSeries.attention);
-                    const c = avg(selected.scoreSeries.curiosity);
-                    const tr = avg(selected.scoreSeries.trust);
-                    const mo = avg(selected.scoreSeries.motivation);
-                    const r = avg(selected.scoreSeries.resistance);
+                    const aggNeg = (arr: number[]) => {
+                      const s = arr.slice(0, t + 1);
+                      if (!s.length) return 0;
+                      const m = s.reduce((a, b) => a + b, 0) / s.length;
+                      return 0.4 * m + 0.2 * s[0] + 0.2 * Math.max(...s) + 0.2 * s[s.length - 1];
+                    };
+                    const a = aggPos(selected.scoreSeries.attention);
+                    const c = aggPos(selected.scoreSeries.curiosity);
+                    const tr = aggPos(selected.scoreSeries.trust);
+                    const mo = aggPos(selected.scoreSeries.motivation);
+                    const r = aggNeg(selected.scoreSeries.resistance);
                     return {
                       attention: a,
                       curiosity: c,
