@@ -1,8 +1,8 @@
-# 03 — Status (as of 2026-04-15)
+# 03 — Status (as of 2026-04-15 ~21h)
 
 ## Current state
 
-Visualizer scaffold is in place. End-to-end text inference is now **verified on Northflank / CoreWeave B200**. UI builds and Convex deployment is provisioned (`abundant-buffalo-304`, eu-west-1).
+**TRIBE v2 inference API is live and publicly accessible.** Scores verified end-to-end from local machine → Northflank B200 → 5 brain scores returned. UI scaffold and Convex deployment provisioned (`abundant-buffalo-304`, eu-west-1).
 
 ## What exists
 
@@ -10,7 +10,8 @@ Visualizer scaffold is in place. End-to-end text inference is now **verified on 
 |---|---|---|
 | Frontend | `frontend/` | TanStack Start + R3F. Routes `/`, `/session/$id`. Components: Brain, Timeline, ScoreBars, BranchTree. Libs: colormap, activations, convex client. |
 | Convex | `frontend/convex/` | Schema (`sessions`, `variants` w/ parent-child), queries/mutations (`createRoot`, `createChild`, `archive`, `list`, `get`, `patchScoring`), action (`scoreVariant`) calling Python. |
-| Python inference | `backend/` | FastAPI `/predict` (text) + `/predict/media` (audio/video). Lazy-loads `facebook/tribev2`. Returns base64 fp16 `(T, 20484)` + ROI scores (curiosity / social / threat) via Destrieux atlas. Text path validated on Northflank / CoreWeave B200 with output `(5, 20484)`. |
+| GPU inference (live) | `gpu/server.py` | Minimal FastAPI `/predict` on Northflank B200. Returns base64 fp16 `(T, 20484)` + 5 outreach-funnel scores (attention, curiosity, trust, motivation, resistance) via Destrieux atlas. **Live at `https://app--jupyter-pytorch--zr8brwblqp2q.code.run`**. |
+| Python inference (full) | `backend/` | FastAPI `/predict` (text) + `/predict/media` (audio/video). Not deployed yet — `gpu/server.py` is the running version. |
 | Brain mesh | `scripts/export_mesh.py` | fsaverage5 → single GLB, 20,484 verts, + `mesh_meta.json`. Not run yet. |
 | Config | `.env.example`, `README.md` | ✅ |
 
@@ -26,17 +27,23 @@ Visualizer scaffold is in place. End-to-end text inference is now **verified on 
   - run `predict(events)`
   - observed output shape `(5, 20484)` and `5` kept segments
 
+## What's done
+
+- [x] TRIBE v2 inference on B200 — verified `(T, 20484)` output
+- [x] `gpu/server.py` deployed on Northflank, publicly accessible
+- [x] 5 outreach-funnel brain scores (attention, curiosity, trust, motivation, resistance)
+- [x] Destrieux atlas parcels verified against neuroscience literature
+- [x] Model differentiates generic vs personalized emails (overall: -1.87 vs -0.56)
+- [x] HuggingFace auth + LLaMA 3.2-3B gated access
+
 ## What's still open
 
-- Run `scripts/export_mesh.py` once → copy `assets/fsaverage5.glb` to `frontend/public/`.
-- Move the validated setup into the actual `backend/` service runtime and mount persistent volume at `/app/cache` so LLaMA/V-JEPA2/W2V-BERT/TRIBE weights survive restarts.
-- Set Convex env:
-  - `bunx convex env set PYTHON_INFERENCE_URL https://...`
-  - `bunx convex env set INFERENCE_TOKEN <openssl rand -hex 32>`
-- Set Northflank service env: `HF_TOKEN`, `INFERENCE_TOKEN` (same value).
-- Accept LLaMA 3.2-3B license on HuggingFace.
-- Validate the existing FastAPI backend end-to-end against the already working shell setup.
-- Confirm `/predict/media` for audio/video separately; only the text path has been verified so far.
+- [ ] Connect Convex → GPU API: `bunx convex env set PYTHON_INFERENCE_URL https://app--jupyter-pytorch--zr8brwblqp2q.code.run`
+- [ ] Run `scripts/export_mesh.py` → copy `assets/fsaverage5.glb` to `frontend/public/`
+- [ ] Clay API integration — pull profiles, generate variants, score, send
+- [ ] Persona-weighted scoring — pass persona type in request, adjust score weights
+- [ ] 3D brain heatmap visualization in frontend
+- [ ] Update Convex action to handle 5 scores (currently expects curiosity/social/threat)
 
 ## Northflank setup notes
 
