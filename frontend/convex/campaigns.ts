@@ -138,17 +138,29 @@ export const seedDemo = mutation({
       lessonsMarkdown: LESSONS_MD,
     });
 
-    // Create leads (from Clay CSV export — real profiles)
+    // Create leads (from Clay CSV export — real OCEAN profiles)
+    await ctx.db.insert("leads", {
+      campaignId,
+      name: "Guillaume Descordes",
+      role: "Sr Character Artist & Concept Artist",
+      company: "Fortis Games",
+      avatarEmoji: "🎨",
+      ocean: { o: 0.78, c: 0.75, e: 0.45, a: 0.72, n: 0.25 },
+      confidence: 0.52,
+      personalityArgs:
+        "Senior character artist bridging concept design and real-time 3D production for mobile games. Multidisciplinary background (economics → 3D graphics → fine arts at Sorbonne). High openness: broad aesthetic curiosity spanning animation, illustration, creature sculpting, and concept art. Quiet but community-supportive — all observed posts are silent reshares amplifying peers across seniority levels. Mentors aspiring artists at Artside School with structured curriculum (ZBrush, character stylization, soft skills). 56K followers but entirely passive public communication — influential through accumulation, not vocal leadership. Emotionally stable with calm, steady career progression. Values craft excellence, community support, and knowledge sharing.",
+    });
+
     await ctx.db.insert("leads", {
       campaignId,
       name: "Diego Troiano",
       role: "Art Director & Motion Designer",
       company: "Dtmg.tv Studio",
       avatarEmoji: "🎬",
-      ocean: { o: 0.91, c: 0.58, e: 0.72, a: 0.68, n: 0.22 },
-      confidence: 0.88,
+      ocean: { o: 0.78, c: 0.80, e: 0.65, a: 0.75, n: 0.22 },
+      confidence: 0.71,
       personalityArgs:
-        "Dual Gold PromaxBDA awards. 12 years in motion graphics for Fox, Discovery, Disney. Prolific on Vimeo and Behance. Bilingual creative with strong visual storytelling instinct. Open to bold creative challenges.",
+        "Founder of Dtmg.tv Studio. Dual Gold PromaxBDA 2016 awards in Art Direction & Typography. 12+ years in motion graphics for Fox (7 years), Discovery (3.5 years), Disney, Warner Bros. Every post follows deliberate structure: concept → execution → credits → legal notice. Shares rejected pitches openly, showing confidence and low neuroticism. Warm and credit-generous — consistently names collaborators. Concept-first creative process. 19+ years of pro-bono work for cerebral palsy association ADESEC. Bilingual (Spanish/English) with portfolio-led communication style. Values craft excellence, creative identity, collaboration, and professional recognition.",
     });
 
     await ctx.db.insert("leads", {
@@ -157,22 +169,70 @@ export const seedDemo = mutation({
       role: "Executive Creative Director & Founder",
       company: "El Kolador",
       avatarEmoji: "🚀",
-      ocean: { o: 0.82, c: 0.85, e: 0.75, a: 0.50, n: 0.62 },
-      confidence: 0.81,
+      ocean: { o: 0.82, c: 0.74, e: 0.68, a: 0.65, n: 0.28 },
+      confidence: 0.62,
       personalityArgs:
-        "Founder of AR/VR-focused creative agency. Integrates AI into creative workflows. Process-driven strategist who values data and measurable results. Guards methodology — evaluates opportunities analytically before committing.",
+        "Founder of El Kolador de Ideas Creativas, an AR/VR-focused creative agency. 25+ years spanning graphic design → digital art direction → creative direction → agency founder. Anti-fluff communicator: 'sin relleno y sin fórmulas vacías.' Embraces emerging tech (AI, AR, VR) pragmatically — 'Innovación, sí. Pero con cabeza.' Very high openness across domains (pharma, agriculture, education, arts, fitness clients). Direct and opinionated, rejects hollow marketing speak. Predominantly amplifies others' content with minimal self-promotion. 28K+ connections. Driven by strategic creativity at the intersection of technology and meaningful results.",
     });
 
     await ctx.db.insert("leads", {
       campaignId,
-      name: "Nilton Navarro",
+      name: "Massimo Lo Bianco",
+      role: "Founder & Artist Manager",
+      company: "22MGMT.co",
+      avatarEmoji: "🎵",
+      ocean: { o: 0.75, c: 0.82, e: 0.78, a: 0.62, n: 0.45 },
+      confidence: 0.62,
+      personalityArgs:
+        "Founder of 22MGMT.co. 15+ years in entertainment (music, fashion, film). Day-to-Day Manager for Adriatique, Event Manager for X. Exceptionally high conscientiousness — exhaustive documentation of events, dates, venues across all roles. Career built on connecting talent with opportunity. Emotionally resilient but situationally reactive to perceived injustice. Mixed agreeableness: warm and collaborative professionally, but sharp and confrontational when provoked. Multi-role operator managing global touring logistics simultaneously. Values talent empowerment, operational excellence, discretion, and creative solution-finding.",
+    });
+
+    await ctx.db.insert("leads", {
+      campaignId,
+      name: "Michael Hoffman",
+      role: "International Executive Coach & Author",
+      company: "ScaleYOU",
+      avatarEmoji: "🎯",
+      ocean: { o: 0.82, c: 0.78, e: 0.72, a: 0.76, n: 0.25 },
+      confidence: 0.71,
+      personalityArgs:
+        "Renowned executive coach and CEO of LeanMail (since 2007). Career spans classical music conducting → Lean consulting → AI book co-authorship → executive coaching. Clifton Strengths: Learner, Achiever, Restorative, Intellection, Individualization, Responsibility. Co-authored book with AI on coaching. Warm yet analytical communicator — contextualizes professional lessons through personal stories. Runs immersive leadership retreats (El Camino walking). Mentors African startups through Bridge for Billions. Values integrity, continuous learning, human development, and work-life balance. Moderate extraversion with preference for intimate small-group depth over mass engagement.",
+    });
+
+    await ctx.db.insert("leads", {
+      campaignId,
+      name: "Didac Esteve",
+      role: "Co-CEO & Art Director",
+      company: "Esteve Arquitectes",
+      avatarEmoji: "🏗️",
+      ocean: { o: 0.82, c: 0.70, e: 0.80, a: 0.62, n: 0.32 },
+      confidence: 0.72,
+      personalityArgs:
+        "Co-CEO of Esteve Arquitectes (50-year family firm, 2nd generation). Founder of Esteve Real Estate and Real Token APP (blockchain real estate). Award-winning graphic designer turned architect/real estate entrepreneur. LinkedIn Creator since 2022 with 22K+ connections. Provocateur and community builder — frames uncomfortable truths, invites replies. Direct and emotionally engaged communicator alternating between indignation and analytical gravity. Long-term volunteer for human rights and environmental causes. Values family, human-centered service, entrepreneurial impact, and craft quality. High openness: graphic design → architecture → blockchain → drones.",
+    });
+
+    await ctx.db.insert("leads", {
+      campaignId,
+      name: "Nilton Navarro Flores",
       role: "Brand Manager & Influencer Marketing",
       company: "InfoJobs",
       avatarEmoji: "⚡",
-      ocean: { o: 0.78, c: 0.70, e: 0.95, a: 0.88, n: 0.15 },
-      confidence: 0.92,
+      ocean: { o: 0.85, c: 0.72, e: 0.92, a: 0.82, n: 0.15 },
+      confidence: 0.76,
       personalityArgs:
-        "Creator of 'Cool Jobs' campaign. International keynote speaker. Co-organizer of the world's largest Personal Branding congress. Extremely social, 10K+ connections. Driven by passion, positivity, and human connection.",
+        "Brand Manager at InfoJobs since 2015, creator of 'Cool Jobs' campaign. International keynote speaker and co-organizer of the world's largest Personal Branding congress. Extremely high extraversion (10K connections, 22K followers). Built career from Mexican TV to Spanish digital marketing through sheer perseverance. Partners with top Spanish influencers (TheGrefg, Ibai Llanos, Kings League). Very low neuroticism — entire brand built on positivity, resilience, and forward momentum. Frames challenges as adventures. Values innovation, happiness at work, perseverance, and human connection.",
+    });
+
+    await ctx.db.insert("leads", {
+      campaignId,
+      name: "Kike Doatis",
+      role: "Independent Creative Director",
+      company: "Kike Doatis",
+      avatarEmoji: "💡",
+      ocean: { o: 0.88, c: 0.60, e: 0.72, a: 0.78, n: 0.28 },
+      confidence: 0.71,
+      personalityArgs:
+        "Independent Creative Director with 20+ brand clients (Danone, FC Barcelona, Casa Batlló, Vogue). Professor of Creativity at 8+ institutions including film academies and universities. Exceptionally high openness — uses mythology, poetry, and philosophy in commercial work. Champions LGBTQ+ inclusion and diversity through campaigns for AXEL HOTELS. Turns creative constraints into differentiators. Poetic, emotionally resonant communicator with lyrical, narrative-first style. Collaborative and credit-generous. Values creative liberty, human-centered storytelling, social inclusion, and educational mentorship.",
     });
 
     return { campaignId, sessionId };
