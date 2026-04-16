@@ -1,18 +1,18 @@
-// Brain activation colormap.
-// Below threshold = dark/off. Above threshold = teal → yellow → red → white.
+// Brain activation colormap (jet: blue → cyan → green → yellow → orange → red).
+// Below threshold = light gray/off. Above threshold = jet colormap gradient.
 // Only the top activated regions light up.
 
 const ACTIVE_STOPS: [number, number, number][] = [
-  [20, 100, 140],    // teal (just above threshold)
-  [40, 180, 100],    // green
-  [250, 220, 50],    // yellow
-  [255, 100, 20],    // orange
-  [255, 50, 50],     // red
-  [255, 220, 220],   // white-hot
+  [59, 130, 246],    // blue   #3B82F6
+  [6, 182, 212],     // cyan   #06B6D4
+  [16, 185, 129],    // green  #10B981
+  [234, 179, 8],     // yellow #EAB308
+  [245, 158, 11],    // orange #F59E0B
+  [239, 68, 68],     // red    #EF4444
 ];
 
-// Dark base for inactive regions
-const BASE_COLOR: [number, number, number] = [0.04, 0.03, 0.08];
+// Light gray base for inactive regions
+const BASE_COLOR: [number, number, number] = [0.82, 0.84, 0.86];
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
