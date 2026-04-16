@@ -30,9 +30,9 @@ export default function WordStream({ message, T, timestep }: Props) {
           className={
             i <= timestep
               ? i === timestep
-                ? "text-white bg-emerald-500/20 rounded px-0.5 transition-colors duration-200"
-                : "text-neutral-200 transition-colors duration-200"
-              : "text-neutral-600 transition-colors duration-200"
+                ? "text-gray-900 bg-blue-100 rounded px-0.5 transition-colors duration-200"
+                : "text-gray-700 transition-colors duration-200"
+              : "text-gray-300 transition-colors duration-200"
           }
         >
           {text}{" "}

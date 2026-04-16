@@ -1,7 +1,6 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { ConvexProvider } from 'convex/react'
 import Header from '../components/Header'
-import Footer from '../components/Footer'
 import { convex } from '../lib/convex'
 
 import appCss from '../styles.css?url'
@@ -20,15 +19,14 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body className="font-sans antialiased bg-neutral-950 text-neutral-100 [overflow-wrap:anywhere]">
+      <body className="font-sans antialiased bg-[#FAFAFA] text-gray-900 [overflow-wrap:anywhere]">
         <ConvexProvider client={convex}>
           <Header />
           {children}
-          <Footer />
         </ConvexProvider>
         <Scripts />
       </body>

@@ -46,4 +46,27 @@ export default defineSchema({
   })
     .index("by_session", ["sessionId"])
     .index("by_parent", ["parentId"]),
+
+  campaigns: defineTable({
+    name: v.string(),
+    sessionId: v.id("sessions"),
+    lessonsMarkdown: v.string(),
+  }),
+
+  leads: defineTable({
+    campaignId: v.id("campaigns"),
+    name: v.string(),
+    role: v.string(),
+    company: v.string(),
+    avatarEmoji: v.string(),
+    ocean: v.object({
+      o: v.number(),
+      c: v.number(),
+      e: v.number(),
+      a: v.number(),
+      n: v.number(),
+    }),
+    confidence: v.number(),
+    personalityArgs: v.string(),
+  }).index("by_campaign", ["campaignId"]),
 });

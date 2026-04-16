@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Play, Pause } from "lucide-react";
 
 type Props = {
   T: number;
@@ -40,12 +41,12 @@ export default function Timeline({
 
   const seconds = timestep / fps - hemodynamicOffsetS;
   return (
-    <div className="flex items-center gap-3 p-3 bg-neutral-900 rounded">
+    <div className="p-2.5 flex items-center gap-3 bg-white border border-gray-200 rounded-xl">
       <button
-        className="px-3 py-1 rounded bg-neutral-700 hover:bg-neutral-600 text-white text-sm"
+        className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all duration-200 flex items-center justify-center"
         onClick={() => setPlaying((p) => !p)}
       >
-        {playing ? "⏸" : "▶"}
+        {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
       </button>
       <input
         type="range"
@@ -53,9 +54,9 @@ export default function Timeline({
         max={Math.max(0, T - 1)}
         value={timestep}
         onChange={(e) => setTimestep(parseInt(e.target.value))}
-        className="flex-1"
+        className="flex-1 accent-blue-600"
       />
-      <span className="text-xs text-neutral-300 font-mono min-w-[80px] text-right">
+      <span className="text-[11px] text-gray-400 font-mono min-w-[80px] text-right">
         t={seconds.toFixed(1)}s
       </span>
     </div>

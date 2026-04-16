@@ -22,10 +22,12 @@
     "@tanstack/react-router-ssr-query": "latest",
     "@tanstack/react-start": "latest",
     "@tanstack/router-plugin": "^1.132.0",
+    "@xyflow/react": "^12.10.2",
     "convex": "^1.35.1",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-rnd": "^10.5.3",
     "tailwindcss": "^4.1.18",
     "three": "^0.183.2",
     "zustand": "^5.0.12"
