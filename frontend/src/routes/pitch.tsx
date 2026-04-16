@@ -1,203 +1,231 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 export const Route = createFileRoute("/pitch")({
   component: Pitch,
 });
 
-const SLIDES = [
-  // SLIDE 1: PROBLEM
-  {
-    content: (
-      <div className="flex flex-col items-center justify-center h-full px-16">
-        <p className="text-sm font-mono uppercase tracking-widest text-gray-400 mb-8">
-          The Problem
-        </p>
-        <h1 className="text-6xl font-extrabold text-gray-900 text-center leading-[1.1]">
-          The best people are harder<br />to reach than ever
-        </h1>
-
-        <div className="grid grid-cols-3 gap-16 mt-16">
-          <div className="text-center">
-            <div className="text-6xl font-extrabold text-rose-500 font-mono">10x</div>
-            <div className="text-base font-semibold text-gray-900 mt-3">more outreach in inboxes</div>
-          </div>
-          <div className="text-center">
-            <div className="text-6xl font-extrabold text-rose-500 font-mono">69%</div>
-            <div className="text-base font-semibold text-gray-900 mt-3">judge on first impression</div>
-          </div>
-          <div className="text-center">
-            <div className="text-6xl font-extrabold text-rose-500 font-mono">0</div>
-            <div className="text-base font-semibold text-gray-900 mt-3">simulate before sending</div>
-          </div>
-        </div>
-      </div>
-    ),
-  },
-
-  // SLIDE 2: SOLUTION
-  {
-    content: (
-      <div className="flex flex-col items-center justify-center h-full px-16">
-        <p className="text-sm font-mono uppercase tracking-widest text-gray-400 mb-8">
-          The Solution
-        </p>
-        <h1 className="text-6xl font-extrabold text-gray-900 text-center leading-[1.1]">
-          Simulate the brain<br />before you hit send
-        </h1>
-
-        <div className="grid grid-cols-3 gap-16 mt-16">
-          <div className="text-center">
-            <div className="text-6xl font-extrabold text-emerald-500 font-mono">5s</div>
-            <div className="text-base font-semibold text-gray-900 mt-3">brain score per email</div>
-          </div>
-          <div className="text-center">
-            <div className="text-6xl font-extrabold text-emerald-500 font-mono">x3</div>
-            <div className="text-base font-semibold text-gray-900 mt-3">engagement rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-6xl font-extrabold text-emerald-500 font-mono">&infin;</div>
-            <div className="text-base font-semibold text-gray-900 mt-3">compound learning</div>
-          </div>
-        </div>
-
-        <p className="text-xl font-semibold text-gray-900 mt-16">
-          Don't spray and pray. <span className="text-orange-500">Spray and Clay.</span>
-        </p>
-      </div>
-    ),
-  },
-
-  // SLIDE 3: ARCHITECTURE
-  {
-    content: (
-      <div className="flex flex-col items-center justify-center h-full px-12">
-        <p className="text-sm font-mono uppercase tracking-widest text-gray-400 mb-8">
-          How It Works
-        </p>
-
-        {/* Pipeline */}
-        <div className="flex items-center gap-4">
-          <ArchBlock color="orange" label="Clay" sub="Leads + OCEAN" />
-          <Arrow />
-          <ArchBlock color="indigo" label="Claude" sub="Variants" />
-          <Arrow />
-          <ArchBlock color="rose" label="TRIBE v2" sub="Brain scoring" />
-          <Arrow />
-          <ArchBlock color="emerald" label="BrainReach" sub="Iterate" />
-        </div>
-
-        {/* Learning loop */}
-        <div className="mt-12 flex items-center gap-4">
-          <div className="flex items-center gap-2 px-5 py-3 rounded-xl border border-gray-200 bg-gray-50">
-            <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-            <span className="text-sm font-semibold text-gray-700">Human teaches</span>
-          </div>
-          <span className="text-gray-300 text-2xl">+</span>
-          <div className="flex items-center gap-2 px-5 py-3 rounded-xl border border-gray-200 bg-gray-50">
-            <div className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-            <span className="text-sm font-semibold text-gray-700">AI learns</span>
-          </div>
-          <span className="text-gray-300 text-2xl">=</span>
-          <div className="flex items-center gap-2 px-5 py-3 rounded-xl border border-emerald-200 bg-emerald-50">
-            <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            <span className="text-sm font-semibold text-emerald-700">Compound loop</span>
-          </div>
-        </div>
-
-        {/* Tech badges */}
-        <div className="mt-12 flex items-center gap-6 text-[11px] text-gray-400 uppercase tracking-widest">
-          <span>Meta TRIBE v2</span>
-          <span className="text-gray-200">|</span>
-          <span>Anthropic Claude</span>
-          <span className="text-gray-200">|</span>
-          <span>NVIDIA B200</span>
-          <span className="text-gray-200">|</span>
-          <span>Convex</span>
-          <span className="text-gray-200">|</span>
-          <span className="text-orange-400">Clay</span>
-        </div>
-      </div>
-    ),
-  },
-];
-
-function ArchBlock({ color, label, sub }: { color: string; label: string; sub: string }) {
-  const colors: Record<string, string> = {
-    orange: "border-orange-200 bg-orange-50 text-orange-700",
-    indigo: "border-indigo-200 bg-indigo-50 text-indigo-700",
-    rose: "border-rose-200 bg-rose-50 text-rose-700",
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  };
-  return (
-    <div className={`px-6 py-5 rounded-xl border ${colors[color]} text-center min-w-[140px]`}>
-      <div className="text-base font-bold">{label}</div>
-      <div className="text-xs mt-1 opacity-60">{sub}</div>
-    </div>
-  );
-}
-
-function Arrow() {
-  return (
-    <div className="flex items-center text-gray-300">
-      <div className="w-10 h-px bg-gray-300" />
-      <ChevronRight className="w-5 h-5 -ml-1" />
-    </div>
-  );
-}
-
 function Pitch() {
-  const [slide, setSlide] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [visibleSlides, setVisibleSlides] = useState<Set<number>>(
+    new Set([0]),
+  );
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  function prev() {
-    setSlide((s) => Math.max(0, s - 1));
-  }
-  function next() {
-    setSlide((s) => Math.min(SLIDES.length - 1, s + 1));
-  }
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const idx = slideRefs.current.indexOf(
+            entry.target as HTMLDivElement,
+          );
+          if (idx === -1) return;
+          if (entry.isIntersecting) {
+            setVisibleSlides((prev) => new Set(prev).add(idx));
+            setActiveSlide(idx);
+          }
+        });
+      },
+      { threshold: 0.4 },
+    );
+    slideRefs.current.forEach((r) => r && observer.observe(r));
+    return () => observer.disconnect();
+  }, []);
 
-  if (typeof window !== "undefined") {
-    window.onkeydown = (e) => {
-      if (e.key === "ArrowRight" || e.key === " ") next();
-      if (e.key === "ArrowLeft") prev();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (["ArrowDown", "ArrowRight", " "].includes(e.key)) {
+        e.preventDefault();
+        const next = Math.min(activeSlide + 1, 1);
+        slideRefs.current[next]?.scrollIntoView({ behavior: "smooth" });
+      }
+      if (["ArrowUp", "ArrowLeft"].includes(e.key)) {
+        e.preventDefault();
+        const prev = Math.max(activeSlide - 1, 0);
+        slideRefs.current[prev]?.scrollIntoView({ behavior: "smooth" });
+      }
     };
-  }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeSlide]);
 
-  const current = SLIDES[slide];
+  const goTo = useCallback((i: number) => {
+    slideRefs.current[i]?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const vis0 = visibleSlides.has(0);
+  const vis1 = visibleSlides.has(1);
 
   return (
-    <div className="h-[calc(100dvh-2.75rem)] bg-white relative select-none">
-      {current.content}
+    <div className="h-[calc(100dvh-2.75rem)] overflow-y-auto snap-y snap-mandatory">
+      {/* ════════════════════════════════════════════
+          SLIDE 1 — PROBLEM
+          ════════════════════════════════════════════ */}
+      <section
+        ref={(el) => {
+          slideRefs.current[0] = el;
+        }}
+        className="h-[calc(100dvh-2.75rem)] snap-start snap-always flex items-center justify-center px-6 relative"
+      >
+        <div
+          className={`text-center max-w-4xl w-full transition-all duration-[900ms] ease-out ${
+            vis0 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+          }`}
+        >
+          <p className="text-[12px] font-semibold uppercase tracking-[0.25em] text-gray-400 mb-6">
+            The problem
+          </p>
 
-      {/* Navigation */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
-        <button
-          onClick={prev}
-          disabled={slide === 0}
-          className="p-2 rounded-full text-gray-300 hover:text-gray-600 disabled:opacity-20 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <div className="flex items-center gap-2">
-          {SLIDES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setSlide(i)}
-              className={`h-1.5 rounded-full transition-all ${
-                i === slide ? "w-6 bg-gray-900" : "w-1.5 bg-gray-300"
-              }`}
-            />
-          ))}
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+            The best people are harder to reach than ever
+          </h2>
+
+          {/* ── Three numbers ── */}
+          <div className="grid grid-cols-3 gap-8 mt-14 mb-14">
+            {/* 10x */}
+            <div className="flex flex-col items-center">
+              <span className="text-[90px] md:text-[120px] font-extrabold leading-none tracking-tight text-gray-900">
+                10x
+              </span>
+              <span className="text-base font-semibold text-gray-500 mt-4">
+                more outreach <span className="font-bold">noise</span>
+              </span>
+              <span className="text-[11px] text-gray-400 mt-2 uppercase tracking-widest">
+                Instantly 2026
+              </span>
+            </div>
+
+            {/* 69% */}
+            <div className="flex flex-col items-center">
+              <span className="text-[90px] md:text-[120px] font-extrabold leading-none tracking-tight text-gray-900">
+                69%
+              </span>
+              <span className="text-base font-semibold text-gray-500 mt-4">
+                judge on <span className="font-bold">first impression</span>
+              </span>
+              <span className="text-[11px] text-gray-400 mt-2 uppercase tracking-widest">
+                Smartlead Stats
+              </span>
+            </div>
+
+            {/* 100% */}
+            <div className="flex flex-col items-center">
+              <span className="text-[90px] md:text-[120px] font-extrabold leading-none tracking-tight text-gray-900">
+                100<span className="text-[60px] md:text-[80px]">%</span>
+              </span>
+              <span className="text-base font-semibold text-gray-500 mt-4">
+                test <span className="font-bold">after</span> sending
+              </span>
+              <span className="text-[11px] text-gray-400 mt-2 uppercase tracking-widest">
+                Instantly 2026
+              </span>
+            </div>
+          </div>
+
+          <div className="mx-auto h-px w-20 bg-gray-200 mb-7" />
+
+          <p className="text-base text-gray-400 leading-relaxed max-w-lg mx-auto">
+            Outreach tools got better. Inboxes got louder.
+            <br />
+            And you're still gambling your best leads on gut feeling.
+          </p>
         </div>
-        <button
-          onClick={next}
-          disabled={slide === SLIDES.length - 1}
-          className="p-2 rounded-full text-gray-300 hover:text-gray-600 disabled:opacity-20 transition-colors"
+
+        {/* Scroll hint */}
+        <div
+          className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-1000 ${
+            activeSlide === 0 ? "opacity-100" : "opacity-0"
+          }`}
         >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-gray-300 font-medium">
+            Scroll
+          </span>
+          <div className="h-8 w-[1px] bg-gradient-to-b from-gray-300 to-transparent" />
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════
+          SLIDE 2 — SOLUTION
+          ════════════════════════════════════════════ */}
+      <section
+        ref={(el) => {
+          slideRefs.current[1] = el;
+        }}
+        className="h-[calc(100dvh-2.75rem)] snap-start snap-always flex items-center justify-center px-6 relative"
+      >
+        <div
+          className={`text-center max-w-4xl w-full transition-all duration-[900ms] ease-out ${
+            vis1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+          }`}
+        >
+          <p className="text-[12px] font-semibold uppercase tracking-[0.25em] text-emerald-500 mb-6">
+            The solution
+          </p>
+
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+            Simulate the brain before you hit send
+          </h2>
+
+          {/* ── Three numbers ── */}
+          <div className="grid grid-cols-3 gap-8 mt-14 mb-14">
+            {/* 5s */}
+            <div className="flex flex-col items-center">
+              <span className="text-[90px] md:text-[120px] font-extrabold leading-none tracking-tight text-emerald-600">
+                5s
+              </span>
+              <span className="text-base font-semibold text-gray-500 mt-4">
+                not 5 days
+              </span>
+            </div>
+
+            {/* 3x */}
+            <div className="flex flex-col items-center">
+              <span className="text-[90px] md:text-[120px] font-extrabold leading-none tracking-tight text-emerald-600">
+                3x
+              </span>
+              <span className="text-base font-semibold text-gray-500 mt-4">
+                engagement
+              </span>
+              <span className="text-[11px] text-gray-400 mt-2 uppercase tracking-widest">
+                Backlinko · Woodpecker
+              </span>
+            </div>
+
+            {/* ∞ */}
+            <div className="flex flex-col items-center">
+              <span className="text-[90px] md:text-[120px] font-extrabold leading-none tracking-tight text-emerald-600">
+                ∞
+              </span>
+              <span className="text-base font-semibold text-gray-500 mt-4">
+                compounding learning
+              </span>
+            </div>
+          </div>
+
+          <div className="mx-auto h-px w-20 bg-emerald-200 mb-7" />
+
+          <p className="text-base text-gray-400 font-medium">
+            Don't spray and pray.{" "}
+            <span className="font-bold text-gray-800">Spray and Clay.</span>
+          </p>
+        </div>
+      </section>
+
+      {/* ── Dot navigation ── */}
+      <nav className="fixed right-5 top-1/2 -translate-y-1/2 flex flex-col gap-2.5 z-50">
+        {[0, 1].map((i) => (
+          <button
+            key={i}
+            onClick={() => goTo(i)}
+            aria-label={`Go to slide ${i + 1}`}
+            className={`rounded-full transition-all duration-300 ${
+              activeSlide === i
+                ? "h-2.5 w-2.5 bg-gray-900"
+                : "h-1.5 w-1.5 bg-gray-300 hover:bg-gray-400"
+            }`}
+          />
+        ))}
+      </nav>
     </div>
   );
 }
