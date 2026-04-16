@@ -1,101 +1,123 @@
-# 03 — Status (as of 2026-04-15 ~21h)
+# 03 — Status (as of 2026-04-16 ~09h)
 
 ## Current state
 
-**TRIBE v2 inference API is live and publicly accessible.** Scores verified end-to-end from local machine → Northflank B200 → 5 brain scores returned. UI scaffold and Convex deployment provisioned (`abundant-buffalo-304`, eu-west-1).
+**Full campaign workspace built.** React Flow tree with pan/zoom, floating macOS-style window (react-rnd) with 3 tabs (Notes/Brain/Leads), Big Five persona-adjusted scoring, real Clay leads seeded. TRIBE v2 inference API live on B200 GPU. UI uses Clay-inspired light theme.
 
 ## What exists
 
 | Area | Path | State |
 |---|---|---|
-| Frontend | `frontend/` | TanStack Start + R3F. Routes `/`, `/session/$id`. Components: Brain, Timeline, ScoreBars (5 funnel scores), BranchTree, WordStream (word-by-word animation). Libs: colormap, activations, convex client. |
-| Convex | `frontend/convex/` | Schema (`sessions`, `variants` w/ 5-score format), queries/mutations, action (`scoreVariant`) calling GPU API. Scores: attention, curiosity, trust, motivation, resistance, overall. |
-| GPU inference (live) | `gpu/server.py` | Minimal FastAPI `/predict` on Northflank B200. Returns base64 fp16 `(T, 20484)` + 5 outreach-funnel scores (attention, curiosity, trust, motivation, resistance) via Destrieux atlas. **Live at `https://app--jupyter-pytorch--zr8brwblqp2q.code.run`**. |
-| Python inference (full) | `backend/` | FastAPI `/predict` (text) + `/predict/media` (audio/video). Not deployed yet — `gpu/server.py` is the running version. |
-| Brain mesh | `scripts/export_mesh.py` | fsaverage5 → single GLB, 20,484 verts, + `mesh_meta.json`. Not run yet. |
-| Config | `.env.example`, `README.md` | ✅ |
-
-## What was validated today on CoreWeave
-
-- Northflank service `jupyter-pytorch` can run `tribev2` inference on **NVIDIA B200**.
-- The stock torch build on the notebook image was not Blackwell-compatible.
-- Switching to the official PyTorch nightly CUDA 13.0 wheel exposed `sm_100` and made CUDA available.
-- `tribev2` text preprocessing also needed `en_core_web_lg` installed via spaCy.
-- Successful smoke test:
-  - load `TribeModel.from_pretrained("facebook/tribev2", device="cuda")`
-  - build text events with `get_events_dataframe(text_path=...)`
-  - run `predict(events)`
-  - observed output shape `(5, 20484)` and `5` kept segments
+| Frontend | `frontend/` | TanStack Start + React Flow + react-rnd. Routes `/` (campaign hub), `/campaign/$id` (workspace). |
+| Campaign Hub | `frontend/src/routes/index.tsx` | Landing page with 3 campaign cards (1 active, 2 locked), Seed Demo button, Reset & Reseed button. |
+| Campaign Workspace | `frontend/src/routes/campaign.$id.tsx` | Full-screen React Flow tree + floating window with 3 tabs. All scoring logic (Kahneman peak-end rule). |
+| Horizontal Tree | `frontend/src/components/HorizontalTree.tsx` | React Flow (`@xyflow/react`) with custom VariantNode, horizontal layout, pan/zoom/drag. |
+| Floating Window | Uses `react-rnd` | macOS-style title bar (traffic lights), draggable by title bar, resizable from edges. Tabs: Notes, Brain, Leads. |
+| Brain Viz | `frontend/src/components/Brain.tsx` | React Three Fiber, fsaverage5 mesh (20,484 vertices), bloom post-processing. Unchanged from v1. |
+| Score Bars | `frontend/src/components/ScoreBars.tsx` | 5 funnel scores with gradient bars, persona-adjusted overlay with delta badges. |
+| Persona Scoring | `frontend/src/lib/persona.ts` | Big Five (OCEAN) → brain score weighting. Smooth interpolation: O→Curiosity×2, C→Attention×1.5, E→Motivation×2, A→Trust×1.5, N→Resistance×3. |
+| Convex | `frontend/convex/` | Schema: sessions, variants, campaigns, leads. Queries/mutations for all. `seedDemo` + `resetDemo` mutations. |
+| GPU inference (live) | `gpu/server.py` | FastAPI `/predict` on Northflank B200. Returns base64 fp16 `(T, 20484)` + 5 outreach-funnel scores. **Live at `https://app--jupyter-pytorch--zr8brwblqp2q.code.run`**. |
+| Seed Data | `frontend/convex/campaigns.ts` | Campaign: "Creative Branding Designer — Barcelona". 3 real Clay leads (Diego Troiano, Lluis Gimeno, Nilton Navarro). 3 email variants (generic → specific → best). |
+| Legacy components | `frontend/src/components/LeadCard.tsx`, `LeadList.tsx`, `LessonsPane.tsx`, `BranchTree.tsx` | Still exist but NOT used by campaign page. Campaign page has inline components (LeadsView, NotesView). |
 
 ## What's done
 
 - [x] TRIBE v2 inference on B200 — verified `(T, 20484)` output
 - [x] `gpu/server.py` deployed on Northflank, publicly accessible
 - [x] 5 outreach-funnel brain scores (attention, curiosity, trust, motivation, resistance)
-- [x] Destrieux atlas parcels verified against neuroscience literature
-- [x] Model differentiates generic vs personalized emails (overall: -1.87 vs -0.56)
-- [x] HuggingFace auth + LLaMA 3.2-3B gated access
-- [x] Word-by-word segment mapping in API (`words[]` + `segments[]`)
-- [x] Frontend: Convex schema/action updated for 5 scores
-- [x] Frontend: ScoreBars shows 5 funnel scores with running average per segment
-- [x] Frontend: WordStream component for word-by-word brain animation
-- [x] Frontend: Brain heatmap threshold — only top 20% activated vertices light up
-- [x] Frontend: BrainLegend color scale component
+- [x] Kahneman peak-end scoring (40% mean + 20% first + 20% worst + 20% last)
+- [x] Brain heatmap threshold — only top 20% activated vertices light up
+- [x] Word-by-word segment mapping in API + WordStream component
+- [x] Convex schema: sessions, variants, campaigns, leads (with Big Five OCEAN)
+- [x] Campaign hub landing page (3 cards, 1 active, 2 locked)
+- [x] React Flow horizontal tree (pan, zoom, custom nodes, smoothstep edges)
+- [x] Floating macOS window via react-rnd (draggable, resizable)
+- [x] 3 tabs in window: Notes (markdown), Brain (3D viz + timeline + scores), Leads (OCEAN profiles)
+- [x] Big Five persona-adjusted scoring with smooth interpolation
+- [x] Real Clay leads seeded (Diego Troiano, Lluis Gimeno, Nilton Navarro)
+- [x] Reset & Reseed functionality
+- [x] Clay-inspired light theme (white bg, gray borders, subtle shadows)
 
-## What's still open
+## What's still open / needs improvement
 
-- [ ] Connect Convex → GPU API: `bunx convex env set PYTHON_INFERENCE_URL https://app--jupyter-pytorch--zr8brwblqp2q.code.run`
-- [ ] Run `scripts/export_mesh.py` → copy `assets/fsaverage5.glb` to `frontend/public/`
-- [ ] Clay API integration — pull profiles, generate variants, score, send
-- [ ] Persona-weighted scoring — pass persona type in request, adjust score weights
+- [ ] **UI/UX polish** — the overall layout and visual quality need significant improvement. The tree nodes, the floating window, the tab content — all need to look more professional and polished. Clay's actual UI is much cleaner.
+- [ ] **Tree visual quality** — nodes should be more visually appealing, connections smoother, maybe add animations on selection.
+- [ ] **Window tabs content** — Brain tab needs better layout (brain viz + scores side by side). Leads tab needs a cleaner card design. Notes tab needs better typography.
+- [ ] **Connect Convex → GPU API**: `bunx convex env set PYTHON_INFERENCE_URL https://app--jupyter-pytorch--zr8brwblqp2q.code.run`
+- [ ] **Score variants before demo** — run `seedDemo`, wait for GPU scoring to complete on all 3 variants.
+- [ ] **Pre-cache brain data** — ensure all variants are scored and activations stored in Convex BEFORE the demo (no GPU latency on stage).
+- [ ] **Email variant generation with Claude** — currently emails are hardcoded in seed. Could use Anthropic API to generate variants dynamically.
+- [ ] **Actually send emails via Clay** — integrate Clay's outreach API to send the winning variant.
+- [ ] **Response tracking** — track open/reply rates and feed back into lessons.
 
-## Northflank setup notes
+## Architecture
 
-Recommended sequence on the current notebook image:
-
-```bash
-apt-get update
-apt-get install -y ffmpeg libsndfile1 git
-
-cd /workspace/tribev2
-pip install -e .
-pip install -U "huggingface_hub[cli]"
-huggingface-cli login
-
-pip uninstall -y torch torchvision torchaudio
-pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu130
-
-python -m spacy download en_core_web_lg
-python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_arch_list()); print(torch.cuda.get_device_name(0))"
 ```
+Landing Page (/) → Campaign list → click active campaign
+       ↓
+Campaign Workspace (/campaign/$id)
+  ├── React Flow tree (full screen, pan/zoom)
+  │     └── Custom VariantNode components
+  │           └── Click → opens floating window
+  ├── Floating Window (react-rnd, draggable/resizable)
+  │     ├── Tab: Notes → rendered markdown (campaign lessons)
+  │     ├── Tab: Brain → 3D brain + timeline + score bars
+  │     │     └── Persona-adjusted scores if lead selected
+  │     └── Tab: Leads → lead profiles with OCEAN bars
+  │           └── Click lead → adjusts Brain tab scores
+  └── Action bar → Branch / Optimize / Prune
+```
+
+## Tech Stack
+
+| Layer | Tool |
+|---|---|
+| Frontend framework | TanStack Start + React 19 |
+| Tree visualization | React Flow (`@xyflow/react`) |
+| Floating window | react-rnd |
+| 3D brain | React Three Fiber + Three.js |
+| Styling | Tailwind CSS 4 |
+| Icons | Lucide React |
+| Backend/DB | Convex |
+| Brain model | TRIBE v2 (Meta) on B200 GPU via Northflank |
+| Persona scoring | Big Five (OCEAN) → brain score weights |
+
+## Demo flow (4 minutes)
+
+1. **Landing page** (5s): "Here are our campaigns. We're targeting Creative Branding Designers in Barcelona."
+2. **Click campaign** → full-screen tree appears
+3. **Click v1** (15s): "Our first draft. Generic. Watch the brain — avoidance regions light up red. Score: -1.87."
+4. **Click v2.1** (30s): "We iterated twice. The brain changes — curiosity and trust fire up. Score improved."
+5. **Leads tab** → Click Diego (20s): "Diego is high Openness, creative risk-taker. Scores adapt to his personality."
+6. **Click Lluis** (20s): "Lluis is high Neuroticism. Same email, resistance explodes. We wouldn't send this one to him."
+7. **Click Nilton** (15s): "Nilton is extremely extraverted. Motivation spikes on collaborative language."
+8. **Notes tab** (10s): "The system learns. Specificity beats flattery. Same email, different brain."
+9. **Branch** (30s): New node → GPU scores → brain changes → scores improve.
+10. **Close** (10s): "We don't spray and pray. We spray and Clay."
 
 ## Dev commands
 
-```
-# Terminal 1
+```bash
+# Terminal 1: Convex
 cd frontend && bunx convex dev
 
-# Terminal 2
+# Terminal 2: Frontend
 cd frontend && bun run dev
 
-# Terminal 3 (needs GPU)
-cd backend && uvicorn app.main:app --reload
+# Set GPU URL in Convex (run once)
+cd frontend && bunx convex env set PYTHON_INFERENCE_URL https://app--jupyter-pytorch--zr8brwblqp2q.code.run
 ```
 
-## Known gotchas hit already
+## Key files for next agent
 
-- Convex `_creationTime` can't be in an explicit index — removed from `sessions`.
-- Stale `.js` files next to `.ts` files in `convex/` broke esbuild with "two output files share the same path". Don't commit compiled JS into `convex/`.
-- `convex/_generated/` only appears after `bunx convex dev`; frontend TS won't compile without it.
-
-## Demo flow (target)
-
-1. Home page: paste a cold email → **Start session**.
-2. Session page: 3-pane — branch tree (left), 3D brain + timeline (center), message + score bars (right).
-3. **Word-by-word playback**: email text highlights progressively, brain heatmap updates per segment, 5 score bars animate in sync.
-4. Prune weak variants, duplicate-and-mutate strong ones, watch scores improve across generations.
-5. Pitch line: "We don't A/B test with click rates. We test with the human brain before we send."
-
-## Post-hackathon
-
-Clay API → Claude Sonnet 4.6 drafts variants → auto-populates branch tree → winner sent via Clay native outreach. Response rates flow back into Convex.
+| File | What it does | Lines |
+|---|---|---|
+| `frontend/src/routes/campaign.$id.tsx` | **Main campaign page** — all scoring logic, floating window, 3 tabs, inline sub-components | ~500 |
+| `frontend/src/components/HorizontalTree.tsx` | React Flow tree with custom nodes | ~155 |
+| `frontend/src/routes/index.tsx` | Landing page with campaign cards | ~115 |
+| `frontend/convex/campaigns.ts` | Convex functions + seed data + reset | ~175 |
+| `frontend/convex/schema.ts` | DB schema (sessions, variants, campaigns, leads) | ~70 |
+| `frontend/src/lib/persona.ts` | Big Five → score weighting | ~50 |
+| `frontend/src/components/ScoreBars.tsx` | Score bars with persona overlay | ~100 |
+| `frontend/src/components/Brain.tsx` | 3D brain visualization (R3F) | ~125 |

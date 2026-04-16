@@ -2,7 +2,7 @@
 
 ## Name
 
-**NeuralReach** (working title)
+**NeuralReach**
 
 ## Track
 
@@ -10,140 +10,120 @@
 
 ## One-Liner
 
-The first outreach system powered by Meta's brain encoding model (TRIBE v2). Generates multiple email variants per candidate, scores each on 5 neural engagement signals (attention, curiosity, trust, motivation, resistance), and sends the version the brain responds to best.
+The first outreach system powered by Meta's brain encoding model (TRIBE v2). For each lead, we generate email variants, score each on 5 neural engagement signals, adjust scores per the lead's Big Five personality, and iterate in a visual tree — branching the winners, pruning the losers.
 
-## The Core Insight
+## The Concept: Spray & Clay
 
-Every other team will:
-1. Enrich profiles from Clay's database
-2. Ask Claude to write a "personalized" email
-3. Send it
+**Not spray and pray. Spray and Clay.**
 
-We do:
-1. Enrich profiles from Clay's database → Claude infers persona type
-2. Ask Claude to write **3-5 variants** per candidate, targeted to persona
-3. Run each variant through **TRIBE v2** on a B200 GPU
-4. Extract 5 outreach-funnel brain scores (attention, curiosity, trust, motivation, resistance)
-5. Apply persona-specific weights → pick the variant that scores best FOR THIS PERSON
-6. Show the 3D brain activation heatmap changing between variants in the dashboard
+Instead of sending one generic email and hoping, we:
+1. Pull real leads from Clay with enriched profiles
+2. Build a Big Five (OCEAN) personality profile per lead (done in Clay)
+3. Generate multiple email variants
+4. Score each variant through TRIBE v2 (Meta's brain encoding model) on a B200 GPU
+5. Adjust scores per lead's personality using Big Five → brain score weighting
+6. Visualize the evolution in a horizontal tree — branch the good, prune the bad
+7. Each campaign accumulates lessons (patterns, anti-patterns) in a markdown file
+8. Next campaign starts smarter
 
-## What TRIBE v2 Actually Does Here
+## Core UX: The Campaign Workspace
 
-TRIBE v2 is Meta's open-source brain encoding model. It takes text input and predicts fMRI brain activity across 20,484 cortical vertices (fsaverage5). We map these activations to the Destrieux atlas and extract 5 outreach-funnel scores:
+### Page 1: Campaign Hub (`/`)
+- Grid of campaign cards (1 active for demo, 2 locked placeholders)
+- Click active campaign → enter workspace
 
-| Score | Question it answers | Brain regions (Destrieux parcels) |
+### Page 2: Campaign Workspace (`/campaign/$id`)
+
+**The tree is the hero.** Full-screen React Flow graph showing email variant evolution:
+- Nodes flow left → right (root → iterations)
+- Each node shows: status pill, overall score, message preview
+- Pan, zoom, drag built-in
+- Click a node → floating window opens
+
+**The floating window** (macOS-style, react-rnd):
+- Draggable by title bar, resizable from edges
+- macOS traffic light dots (red = close, yellow/green = decoration)
+- **3 tabs:**
+  - **Notes**: Campaign lessons rendered from markdown (patterns, anti-patterns, what works per persona type)
+  - **Brain**: 3D brain activation heatmap + timeline + score bars (with persona deltas if lead selected)
+  - **Leads**: Lead profiles with Big Five OCEAN bars, confidence scores, personality arguments. Click a lead → scores adjust on Brain tab.
+- **Action bar**: Branch new variant / Optimize with AI / Prune
+
+## What TRIBE v2 Does
+
+TRIBE v2 is Meta's open-source brain encoding model. Text in → predicted fMRI activity across 20,484 cortical vertices. We extract 5 outreach-funnel scores via the Destrieux atlas:
+
+| Score | Question | Brain regions |
 |---|---|---|
-| **Attention** | "Will they stop scrolling?" | Supramarginal gyrus, intraparietal sulcus, middle frontal gyrus, superior frontal sulcus (dorsal + ventral attention networks) |
-| **Curiosity** | "Will they read the whole thing?" | Anterior cingulate (info-gap), pars triangularis, orbital IFG, middle frontal sulcus |
-| **Trust** | "Will they trust the sender?" | Middle temporal gyrus (TPJ), angular gyrus, superior frontal (dmPFC), precuneus (theory of mind network) |
-| **Motivation** | "Will they want to reply?" | Gyrus rectus (vmPFC), suborbital sulcus, subcallosal gyrus, medial orbital sulcus, anterior cingulate (cortical reward circuit) |
-| **Resistance** | "Will their brain shut down?" | Anterior insula, anterior circular sulcus, pars opercularis, mid-anterior cingulate (aversion/conflict network) |
+| **Attention** | "Will they stop scrolling?" | Dorsal + ventral attention networks |
+| **Curiosity** | "Will they read the whole thing?" | Anterior cingulate, info-gap regions |
+| **Trust** | "Will they trust the sender?" | Theory of mind network (TPJ, dmPFC) |
+| **Motivation** | "Will they want to reply?" | Cortical reward circuit (vmPFC) |
+| **Resistance** | "Will their brain shut down?" | Aversion/conflict network (insula) |
 
-**Overall** = attention + curiosity + trust + motivation - 2 × resistance
+**Overall** = attention + curiosity + trust + motivation − 2 × resistance
 
-We optimize emails to maximize attention + curiosity + trust + motivation and minimize resistance.
+**Kahneman scoring**: 40% mean + 20% first impression + 20% worst moment + 20% last impression (primacy-peak-recency rule).
 
-### Persona-weighted scoring (next step)
+## Big Five Persona Scoring
 
-TRIBE v2 predicts generic human neural responses — it can't simulate a specific person's brain. But we can weight the 5 scores differently per persona type inferred by Claude from the Clay profile:
+TRIBE v2 predicts average human neural response. We personalize it per lead using Big Five (OCEAN) profiles from Clay:
 
-| Persona | Weights emphasis |
-|---|---|
-| Technical IC | Curiosity x2 |
-| CEO / Exec | Attention x2, Resistance x3 penalty |
-| Researcher | Curiosity x2, Trust x1.5 |
-| Sales / GTM | Trust x2, Motivation x2 |
+| Trait | Brain Score | Max Weight |
+|---|---|---|
+| Openness (O) | Curiosity | ×2.0 |
+| Conscientiousness (C) | Attention | ×1.5 |
+| Extraversion (E) | Motivation | ×2.0 |
+| Agreeableness (A) | Trust | ×1.5 |
+| Neuroticism (N) | Resistance | ×3.0 (penalty) |
 
-The personalization happens at two levels: (1) Claude generates variants targeted to the persona, (2) TRIBE scoring is weighted to what matters most for that persona type.
+Smooth interpolation: trait < 0.3 → no effect, trait > 0.8 → max weight.
 
-## Full Pipeline
+## Demo Campaign: "Creative Branding Designer — Barcelona"
 
-```
-Clay profile database
-        ↓
-Persona builder (Claude) — infer persona type (exec, IC, researcher, sales...)
-        ↓
-Email variant generator (Claude) — 3-5 variants per candidate, different tones/hooks
-        ↓
-TRIBE v2 scoring (B200 GPU) — 5 brain scores per variant (attention, curiosity, trust, motivation, resistance)
-        ↓
-Persona-weighted ranking — apply persona-specific weights to select optimal variant
-        ↓
-Send via Clay outreach
-        ↓
-Dashboard — 3D brain heatmap + score bars + variant comparison
-```
+**3 real leads from Clay CSV:**
 
-## The Demo Moment
+| Lead | Role | Company | Key OCEAN | Demo purpose |
+|---|---|---|---|---|
+| Diego Troiano | Art Director & Motion Designer | Dtmg.tv Studio | O:0.91 E:0.72 N:0.22 | High openness = curiosity fires, low resistance |
+| Lluis Gimeno | Exec Creative Director | El Kolador | C:0.85 N:0.62 | High neuroticism = resistance spikes on same email |
+| Nilton Navarro | Brand Manager & Influencer | InfoJobs | E:0.95 A:0.88 N:0.15 | Extreme extraversion = motivation explodes |
 
-**Word-by-word brain scan**: the email text appears progressively. For each word group:
-- The 3D brain heatmap updates — only the top 20% activated regions light up (rest stays dark)
-- The 5 score bars show the **running average** up to that point — scores build up as the brain "reads"
-- If the email has a bad phrase, the scores visibly drop in real time as the average absorbs it
+**3 email variants:**
+- v1 (archived): Generic template → bad scores
+- v2: References Vimeo/Discovery work → better
+- v2.1: References PromaxBDA Gold specifically → best scores
 
-Then switch to variant B — different wording, different brain response. Pick the one with the highest overall score. Send it.
+**Lessons learned:**
+- Specificity beats flattery (trust +90%, resistance −107%)
+- Referencing actual awards triggers curiosity peaks (anterior cingulate activates)
+- Same email, different brain (Lluis 3× resistance vs. Diego on same text)
+- High-E profiles respond to collaborative language ("what we're building" > "what I'm building")
 
-**The line judges will remember**: *"We don't A/B test with click rates. We test with the human brain before we send."*
+## Self-Improving Loop (Vision)
 
-## Use Case (deliberately broad per Clay judge's hint)
+Each campaign has a markdown lessons file. Both humans and AI agents update it based on:
+- Brain scores from TRIBE v2
+- Persona-adjusted patterns per Big Five type
+- Campaign results (open rates, reply rates — future)
 
-Not just recruiting. The brief is "find people who will change your life." We demo for:
-1. **Hiring** — finding a non-obvious engineering candidate
-2. **Co-founder matching** — finding someone whose neural profile matches your communication style
-3. Potentially: **investor outreach**, **mentor finding**
-
-This matches Clay judge Yash's explicit hint that the use case doesn't have to be recruiting.
+Next campaign reads these lessons → starts with better variants → accumulates more insights → compound improvement.
 
 ## Tech Stack
 
 | Layer | Tool |
 |---|---|
-| Profile data | Clay API |
-| Persona + email generation | Claude Sonnet 4.6 (Anthropic credits) |
-| Brain scoring | TRIBE v2 (facebook/tribev2) → 5 Destrieux ROI scores |
-| GPU compute | B200 180GB via Northflank/CoreWeave |
-| Inference server | `gpu/server.py` — minimal FastAPI, clone-and-run on Northflank |
-| Frontend | TanStack Start + React Three Fiber |
-| DB + realtime | Convex (`abundant-buffalo-304`, eu-west-1) |
-| Outreach sending | Clay native |
+| Frontend | TanStack Start + React 19 |
+| Tree viz | React Flow (`@xyflow/react`) |
+| Window | react-rnd (draggable/resizable) |
+| 3D brain | React Three Fiber + Three.js |
+| Styling | Tailwind CSS 4 + Lucide icons |
+| Backend/DB | Convex (realtime) |
+| Brain model | TRIBE v2 on NVIDIA B200 (180GB VRAM) via Northflank |
+| Persona | Big Five (OCEAN) from Clay → `persona.ts` weight function |
+| GPU API | FastAPI at `https://app--jupyter-pytorch--zr8brwblqp2q.code.run/predict` |
 
-## Scope — 24h constraint
+## Pitch Line
 
-### Must-have for demo
-- [x] TRIBE v2 running on B200, returns 5 outreach-funnel brain scores for text input
-- [x] Inference API live at `https://app--jupyter-pytorch--zr8brwblqp2q.code.run/predict`
-- [ ] 3 email variants generated by Claude per candidate profile
-- [ ] TRIBE scoring selects winner (persona-weighted)
-- [ ] Brain activation visualization (3D heatmap)
-- [ ] At least 5 real candidates from Clay database processed end-to-end
-- [ ] One actually sent email with a real response (if possible)
-
-### Nice-to-have
-- [ ] Persona-weighted scoring (different weights per persona type)
-- [ ] Dashboard with live brain map + variant comparison
-- [ ] Response rate tracking
-
-### Cut
-- ❌ Voice call outreach (Clay track doesn't need it — save for another project)
-- ❌ Multi-language (not relevant for Clay)
-- ❌ Fine-tuning TRIBE (no time, not needed)
-
-## Validated Results
-
-Tested on the live API with two emails:
-
-| Score | Generic cold email | Personalized email | Delta |
-|---|---|---|---|
-| Attention | 0.05 | -0.13 | - |
-| Curiosity | -0.21 | -0.13 | +38% |
-| Trust | -0.32 | -0.03 | **+90%** |
-| Motivation | -0.31 | -0.25 | +19% |
-| Resistance | 0.54 | -0.04 | **-107%** |
-| **Overall** | **-1.87** | **-0.56** | **+1.3 pts** |
-
-The model clearly differentiates between generic and personalized outreach. Trust rises, resistance drops. This is the demo.
-
-## Confidence
-
-- Clay track win: **55-65%** — TRIBE v2 live + validated differentiation + exact judge criteria match
-- Grand Jury €5k: **25-35%** — brain heatmap is the clip nobody forgets
+> "We don't spray and pray. We spray and Clay."
+> "We don't A/B test with click rates. We test with the human brain before we send."
