@@ -16,17 +16,16 @@ const ROWS: { key: keyof Scores; label: string; tone: "good" | "bad" }[] = [
 ];
 
 function bar(v: number, tone: "good" | "bad") {
-  // Map score from [-1, 1] range to [0%, 100%]
   const pct = Math.max(0, Math.min(1, (v + 1) / 2)) * 100;
-  const color =
+  const gradient =
     tone === "good"
-      ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
-      : "bg-gradient-to-r from-rose-500 to-rose-400";
+      ? "linear-gradient(to right, #10B981, #34D399)"
+      : "linear-gradient(to right, #F87171, #EF4444)";
   return (
-    <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+    <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
       <div
-        className={`h-full rounded-full ${color} transition-all duration-300`}
-        style={{ width: `${pct}%` }}
+        className="h-full rounded-full transition-all duration-300"
+        style={{ width: `${pct}%`, background: gradient }}
       />
     </div>
   );
@@ -78,24 +77,35 @@ export default function ScoreBars({ scores, personaScores, leadName }: Props) {
         const displayedOverall = personaScores ? personaScores.overall : scores.overall;
         const overallDelta = personaScores ? personaScores.overall - scores.overall : null;
         return (
-          <div className="pt-2 mt-2 border-t border-gray-200 flex justify-between">
-            <span className="text-[11px] text-gray-500 font-medium">Overall</span>
-            <span className="flex items-center gap-1">
+          <>
+            <div className="pt-3 mt-3 border-t border-gray-200 flex justify-between items-center">
+              <span className="text-[11px] text-gray-500 font-medium">Overall</span>
               <span
-                className={`text-[11px] font-mono ${displayedOverall >= 0 ? "text-emerald-600" : "text-rose-500"}`}
+                className={`text-base font-mono font-extrabold ${displayedOverall >= 0 ? "text-emerald-600" : "text-rose-500"}`}
               >
-                {displayedOverall.toFixed(2)}
+                {displayedOverall >= 0 ? "+" : ""}{displayedOverall.toFixed(2)}
               </span>
-              {overallDelta !== null && overallDelta !== 0 && (
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-mono ${overallDelta > 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}
-                >
-                  {overallDelta > 0 ? "+" : ""}
-                  {overallDelta.toFixed(2)}
-                </span>
-              )}
-            </span>
-          </div>
+            </div>
+            {leadName && overallDelta !== null && (
+              <div className="mt-2 px-2.5 py-2 bg-blue-50 border border-blue-100 rounded-lg">
+                <div className="text-[10px] font-semibold text-blue-600">Adjusted for {leadName}</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">
+                  {ROWS.map((r) => {
+                    const d = personaScores ? personaScores[r.key] - scores[r.key] : 0;
+                    if (Math.abs(d) < 0.01) return null;
+                    return (
+                      <span key={r.key} className="mr-2">
+                        {r.label}{" "}
+                        <span className={d > 0 ? "text-emerald-600 font-semibold" : "text-rose-500 font-semibold"}>
+                          {d > 0 ? "+" : ""}{d.toFixed(2)}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         );
       })()}
     </div>
