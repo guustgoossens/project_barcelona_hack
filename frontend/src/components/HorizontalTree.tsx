@@ -16,6 +16,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
+import { FlaskConical } from "lucide-react";
 import { toScore100 } from "../lib/scoring";
 
 type Variant = Doc<"variants">;
@@ -235,6 +236,20 @@ function VariantNode({ data }: NodeProps) {
             <div className="flex-1 h-[3px] rounded-full bg-emerald-500" style={{ opacity: norm(variant.scores.trust) }} title="Trust" />
             <div className="flex-1 h-[3px] rounded-full bg-emerald-500" style={{ opacity: norm(variant.scores.motivation) }} title="Motivation" />
             <div className="flex-1 h-[3px] rounded-full bg-red-400" style={{ opacity: norm(variant.scores.resistance) }} title="Resistance" />
+          </div>
+        )}
+
+        {/* Hypothesis badge */}
+        {variant.hypothesis && (
+          <div className="px-3 pb-2.5 group/hyp relative">
+            <div className="flex items-center gap-1 text-[10px] text-gray-400">
+              <FlaskConical className="w-2.5 h-2.5 shrink-0" />
+              <span className="truncate">{variant.hypothesis}</span>
+            </div>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/hyp:block w-56 bg-gray-900 text-white text-[11px] leading-relaxed p-2.5 rounded-lg shadow-xl z-50 pointer-events-none">
+              <span className="font-semibold text-gray-300 block mb-0.5">Hypothesis</span>
+              {variant.hypothesis}
+            </div>
           </div>
         )}
       </div>

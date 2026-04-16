@@ -45,6 +45,7 @@ export default defineSchema({
     ),
     error: v.optional(v.string()),
     reasoning: v.optional(v.string()),
+    hypothesis: v.optional(v.string()),
   })
     .index("by_session", ["sessionId"])
     .index("by_parent", ["parentId"]),

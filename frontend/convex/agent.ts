@@ -74,6 +74,10 @@ const createVariant = createTool({
       .describe(
         "Your full analysis: lead psychology, strategy, campaign lessons applied, and per-sentence breakdown of what each part targets neurally. Use markdown.",
       ),
+    hypothesis: z
+      .string()
+      .optional()
+      .describe("The hypothesis being tested, if this variant is part of an A/B hypothesis test. Pass the exact hypothesis text for both control and hypothesis variants."),
   }),
   execute: async (ctx, input): Promise<Record<string, unknown>> => {
     const variantId = await ctx.runMutation(api.variants.createChild, {
@@ -81,6 +85,7 @@ const createVariant = createTool({
       message: input.message,
       leadId: input.leadId as any,
       reasoning: input.reasoning,
+      hypothesis: input.hypothesis,
     });
     return {
       variantId,

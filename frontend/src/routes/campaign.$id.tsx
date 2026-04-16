@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
+  FlaskConical,
 } from "lucide-react";
 
 export const Route = createFileRoute("/campaign/$id")({
@@ -55,6 +56,7 @@ function Campaign() {
   const [reasoningOpen, setReasoningOpen] = useState(false);
   const [branchOpen, setBranchOpen] = useState(false);
   const [branchText, setBranchText] = useState("");
+  const [hypothesisText, setHypothesisText] = useState("");
 
   const handleSelectNode = useCallback(
     (nodeId: Id<"variants">) => {
@@ -169,6 +171,7 @@ function Campaign() {
   function openBranch() {
     if (!selectedVariant) return;
     setBranchText(selectedVariant.message);
+    setHypothesisText("");
     setBranchOpen(true);
   }
 
@@ -177,6 +180,39 @@ function Campaign() {
     await createChild({ parentId: selectedVariantId, message: branchText.trim() });
     setBranchOpen(false);
     setBranchText("");
+  }
+
+  async function submitHypothesis() {
+    if (!selectedVariantId || !selectedVariant || !hypothesisText.trim()) return;
+    setBranchOpen(false);
+
+    const scoreSummary = selectedVariant.scores
+      ? `Current scores: attention ${selectedVariant.scores.attention.toFixed(2)}, curiosity ${selectedVariant.scores.curiosity.toFixed(2)}, trust ${selectedVariant.scores.trust.toFixed(2)}, motivation ${selectedVariant.scores.motivation.toFixed(2)}, resistance ${selectedVariant.scores.resistance.toFixed(2)}, overall ${toScore100(selectedVariant.scores.overall)}/100`
+      : "Scores: not yet available";
+
+    const prompt = `Run an A/B hypothesis test on this email variant.
+
+Current email:
+"${selectedVariant.message}"
+
+${scoreSummary}
+
+Hypothesis to test: "${hypothesisText.trim()}"
+
+Parent Variant ID: ${selectedVariantId}
+Campaign ID: ${campaignId}
+
+Create exactly 2 new child variants from this parent:
+
+1. **Control (null hypothesis):** Lightly polish the current email — fix awkward phrasing, tighten copy — but do NOT change its core strategy or angle. This is the baseline.
+
+2. **Hypothesis variant:** Rewrite the email to fully incorporate and test the hypothesis: "${hypothesisText.trim()}". Make meaningful changes that truly test whether this approach improves engagement.
+
+Look up the campaign lessons first. Create both variants using the createVariant tool with full reasoning for each. IMPORTANT: pass the hypothesis field with the exact hypothesis text "${hypothesisText.trim()}" on BOTH variants so the UI can display it. Keep your text responses brief — the reasoning fields are the deliverable.`;
+
+    const threadId = await ensureThread({ campaignId });
+    await sendMessage({ threadId, prompt });
+    setHypothesisText("");
   }
 
   async function handleOptimize() {
@@ -605,32 +641,70 @@ Look up the campaign lessons and create an improved variant. Include your full r
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="p-5">
+                {/* ── Section 1: Edit draft ── */}
+                <div className="p-5 pb-3">
                   <label className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">
-                    Email copy
+                    Edit draft
                   </label>
                   <textarea
                     autoFocus
                     value={branchText}
                     onChange={(e) => setBranchText(e.target.value)}
-                    rows={8}
+                    rows={6}
                     className="mt-2 w-full text-sm text-gray-700 leading-relaxed px-3.5 py-3 rounded-lg border border-gray-200 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 resize-none"
                     placeholder="Write your variant..."
                   />
+                  <div className="flex justify-end mt-2">
+                    <button
+                      onClick={submitBranch}
+                      disabled={!branchText.trim()}
+                      className="px-4 py-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
+                    >
+                      Create variant
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-gray-100 bg-gray-50/50">
+
+                {/* ── OR divider ── */}
+                <div className="flex items-center gap-3 px-5">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <span className="text-xs font-medium text-gray-400">or</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+
+                {/* ── Section 2: Hypothesis ── */}
+                <div className="p-5 pt-3">
+                  <label className="text-[11px] font-medium text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <FlaskConical className="w-3 h-3" />
+                    Test a hypothesis
+                  </label>
+                  <textarea
+                    value={hypothesisText}
+                    onChange={(e) => setHypothesisText(e.target.value)}
+                    rows={2}
+                    className="mt-2 w-full text-sm text-gray-700 leading-relaxed px-3.5 py-3 rounded-lg border border-gray-200 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 resize-none"
+                    placeholder={'e.g. "Focus on their recent achievement..."'}
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1.5 leading-relaxed">
+                    AI writes a control draft and a hypothesis draft so you can compare brain scores.
+                  </p>
+                  <div className="flex justify-end mt-2">
+                    <button
+                      onClick={submitHypothesis}
+                      disabled={!hypothesisText.trim()}
+                      className="px-4 py-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
+                    >
+                      Test hypothesis
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-start px-5 py-3.5 border-t border-gray-100 bg-gray-50/50">
                   <button
                     onClick={() => setBranchOpen(false)}
                     className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
                   >
                     Cancel
-                  </button>
-                  <button
-                    onClick={submitBranch}
-                    disabled={!branchText.trim()}
-                    className="px-4 py-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
-                  >
-                    Create variant
                   </button>
                 </div>
               </div>
