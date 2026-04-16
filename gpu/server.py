@@ -190,7 +190,7 @@ def predict(req: Req, _=Depends(auth)):
             "trust": trust,
             "motivation": motivation,
             "resistance": resistance,
-            "overall": agg_pos(attention) + agg_pos(curiosity) + agg_pos(trust) + agg_pos(motivation) - 2 * agg_neg(resistance),
+            "overall": agg_pos(attention) + agg_pos(curiosity) + agg_pos(trust) + agg_pos(motivation) - agg_neg(resistance),
         },
     }
 

@@ -65,6 +65,12 @@ export const scoreVariant = action({
         return 0.4 * m + 0.2 * xs[0] + 0.2 * Math.max(...xs) + 0.2 * xs[xs.length - 1];
       };
 
+      const att = aggPos(payload.scores.attention);
+      const cur = aggPos(payload.scores.curiosity);
+      const tru = aggPos(payload.scores.trust);
+      const mot = aggPos(payload.scores.motivation);
+      const rst = aggNeg(payload.scores.resistance);
+
       await ctx.runMutation(api.variants.patchScoring, {
         id: variantId,
         status: "done",
@@ -73,12 +79,12 @@ export const scoreVariant = action({
         fps: payload.fps,
         hemodynamicOffsetS: payload.hemodynamic_offset_s,
         scores: {
-          attention: aggPos(payload.scores.attention),
-          curiosity: aggPos(payload.scores.curiosity),
-          trust: aggPos(payload.scores.trust),
-          motivation: aggPos(payload.scores.motivation),
-          resistance: aggNeg(payload.scores.resistance),
-          overall: payload.scores.overall,
+          attention: att,
+          curiosity: cur,
+          trust: tru,
+          motivation: mot,
+          resistance: rst,
+          overall: att + cur + tru + mot - rst,
         },
         scoreSeries: {
           attention: payload.scores.attention,

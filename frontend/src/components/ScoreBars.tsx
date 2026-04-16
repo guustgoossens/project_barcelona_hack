@@ -1,3 +1,5 @@
+import { toScore100 } from "../lib/scoring";
+
 export type Scores = {
   attention: number;
   curiosity: number;
@@ -74,19 +76,23 @@ export default function ScoreBars({ scores, personaScores, leadName }: Props) {
         );
       })}
       {(() => {
-        const displayedOverall = personaScores ? personaScores.overall : scores.overall;
-        const overallDelta = personaScores ? personaScores.overall - scores.overall : null;
+        const rawOverall = personaScores ? personaScores.overall : scores.overall;
+        const display100 = toScore100(rawOverall);
+        const rawDelta = personaScores ? toScore100(personaScores.overall) - toScore100(scores.overall) : null;
         return (
           <>
             <div className="pt-3 mt-3 border-t border-gray-200 flex justify-between items-center">
               <span className="text-[11px] text-gray-500 font-medium">Overall</span>
-              <span
-                className={`text-base font-mono font-extrabold ${displayedOverall >= 0 ? "text-emerald-600" : "text-rose-500"}`}
-              >
-                {displayedOverall >= 0 ? "+" : ""}{displayedOverall.toFixed(2)}
+              <span className="flex items-baseline gap-0.5">
+                <span
+                  className={`text-base font-mono font-extrabold ${display100 >= 50 ? "text-emerald-600" : "text-rose-500"}`}
+                >
+                  {display100}
+                </span>
+                <span className="text-[9px] text-gray-400 font-medium">/100</span>
               </span>
             </div>
-            {leadName && overallDelta !== null && (
+            {leadName && rawDelta !== null && (
               <div className="mt-2 px-2.5 py-2 bg-blue-50 border border-blue-100 rounded-lg">
                 <div className="text-[10px] font-semibold text-blue-600">Adjusted for {leadName}</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">

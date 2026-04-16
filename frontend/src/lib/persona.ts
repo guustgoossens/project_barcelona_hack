@@ -42,7 +42,7 @@ export function applyPersonaWeights(
   const trust = base.trust * traitWeight(ocean.a, 1.5);
   const motivation = base.motivation * traitWeight(ocean.e, 2.0);
   const resistance = base.resistance * traitWeight(ocean.n, 3.0);
-  const overall = attention + curiosity + trust + motivation - 2 * resistance;
+  const overall = attention + curiosity + trust + motivation - resistance;
 
   return { attention, curiosity, trust, motivation, resistance, overall };
 }

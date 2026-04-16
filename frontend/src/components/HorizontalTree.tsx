@@ -16,6 +16,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
+import { toScore100 } from "../lib/scoring";
 
 type Variant = Doc<"variants">;
 
@@ -27,10 +28,11 @@ type Props = {
 
 /* ---------- utilities ---------- */
 
-/** Map overall score to a color: red (#EF4444) → yellow (#F59E0B) → green (#10B981) */
-function scoreToColor(score: number | undefined): string {
-  if (score === undefined) return "#D1D5DB";
-  const t = Math.max(0, Math.min(1, (score + 1) / 3));
+/** Map 0–100 brain score to a color: red (#EF4444) → yellow (#F59E0B) → green (#10B981) */
+function scoreToColor(raw: number | undefined): string {
+  if (raw === undefined) return "#D1D5DB";
+  const s = toScore100(raw);
+  const t = Math.max(0, Math.min(1, s / 100));
   if (t < 0.5) {
     const f = t / 0.5;
     const r = Math.round(239 + (245 - 239) * f);
@@ -163,8 +165,9 @@ function VariantNode({ data }: NodeProps) {
     isBest: boolean;
   };
   const isArchived = variant.status === "archived";
-  const score = variant.scores?.overall;
-  const isPositive = score !== undefined && score >= 0;
+  const rawScore = variant.scores?.overall;
+  const score = rawScore !== undefined ? toScore100(rawScore) : undefined;
+  const isPositive = score !== undefined && score >= 50;
 
   const norm = (v: number) => Math.max(0, Math.min(1, (v + 1) / 2));
 
@@ -197,10 +200,13 @@ function VariantNode({ data }: NodeProps) {
           }}
         >
           {score !== undefined ? (
-            <span
-              className={`text-xl font-extrabold font-mono ${isPositive ? "text-emerald-600" : "text-red-600"}`}
-            >
-              {isPositive ? "+" : ""}{score.toFixed(2)}
+            <span className="flex items-baseline gap-0.5">
+              <span
+                className={`text-xl font-extrabold font-mono ${isPositive ? "text-emerald-600" : "text-red-600"}`}
+              >
+                {score}
+              </span>
+              <span className="text-[9px] text-gray-400 font-medium">/100</span>
             </span>
           ) : (
             <span className="text-sm font-medium text-gray-400">
