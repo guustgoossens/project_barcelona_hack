@@ -1,109 +1,92 @@
-# BrainReach — brain-scored outreach
+# BrainReach
 
-Visualizes Meta TRIBE v2 cortical activation per message variant. Built for Clay's
-"Signal over Noise" track.
+**Simulate the brain before you hit send.**
+
+BrainReach uses Meta's TRIBE v2 cortical activation model to score outreach
+messages *before* they're sent. Write a message, generate variants with Claude,
+and see which one lights up the brain — in 5 seconds, not 5 days.
+
+Don't spray and pray. **Spray and Clay.**
+
+> Built for the Clay hackathon track.
+
+## How it works
+
+1. **Pull leads from Clay** — enriched with OCEAN personality traits
+2. **Write & branch message variants** — Claude Sonnet 4.6 suggests rewrites via a learning loop
+3. **Score with TRIBE v2** — each variant is run through Meta's cortical model on an NVIDIA B200
+4. **Visualize** — 3D brain mesh, score bars (attention, curiosity, trust, motivation, resistance), variant tree
+5. **Send the winner** — best-scoring variant goes out via Clay outreach
+
+## Quickstart
+
+### Prerequisites
+
+- [Bun](https://bun.sh) (frontend)
+- A [Convex](https://convex.dev) account (free tier works)
+
+### 1. Install & configure
+
+```bash
+cd frontend
+bun install
+bunx convex dev            # creates a deployment and writes .env.local
+```
+
+Set the Convex environment variables (the inference URL and token are only
+needed if you're running your own GPU backend):
+
+```bash
+bunx convex env set PYTHON_INFERENCE_URL https://your-inference-url
+bunx convex env set INFERENCE_TOKEN your-token
+```
+
+### 2. Run
+
+```bash
+# Terminal 1 — Convex backend
+cd frontend && bunx convex dev
+
+# Terminal 2 — Dev server
+cd frontend && bun run dev
+```
+
+Open **http://localhost:3000** — launch a campaign, type a message, and hit
+**Start session** to score it.
+
+### 3. See the pitch
+
+Navigate to **http://localhost:3000/pitch** for a fullscreen 3-slide deck
+covering the problem, solution, and architecture. Keyboard-navigable with
+arrow keys.
 
 ## Stack
 
-- **Frontend** — TanStack Start + React Three Fiber (`frontend/`)
-- **Realtime + DB** — Convex (`frontend/convex/`)
-- **Inference** — Python FastAPI + TRIBE v2 on a B200 GPU (`backend/`)
+| Layer | Tech |
+|---|---|
+| **Frontend** | TanStack Start, React Three Fiber, Tailwind CSS |
+| **Realtime + DB** | Convex (mutations, queries, actions, file storage) |
+| **AI agent** | Claude Sonnet 4.6 via `@convex-dev/agent` |
+| **Brain inference** | Python FastAPI + Meta TRIBE v2 on CoreWeave B200 |
 
-## First-time setup
+## GPU backend (optional)
 
-1. **Frontend deps**
-   ```
-   cd frontend && bun install
-   ```
-2. **Convex**
-   ```
-   cd frontend && bunx convex dev          # creates deployment, writes .env.local
-   bunx convex env set PYTHON_INFERENCE_URL https://...
-   bunx convex env set INFERENCE_TOKEN <token>
-   ```
-3. **Python inference (CoreWeave B200 via Northflank)**
-   ```
-   cd backend
-   uv sync        # or: pip install -e .
-   export HF_TOKEN=hf_xxx
-   uvicorn app.main:app --host 0.0.0.0 --port 8000
-   ```
-4. **Brain mesh (one-time)**
-   ```
-   python scripts/export_mesh.py
-   cp assets/fsaverage5.glb frontend/public/
-   ```
-
-## CoreWeave / Northflank status
-
-TRIBE v2 text inference has been validated on the Northflank service backed by a
-CoreWeave **NVIDIA B200**.
-
-- Service: `jupyter-pytorch`
-- Base image used: `northflank/public/jupyter-notebook:pytorch2.11.0-cuda12.9-cudnn9-devel`
-- Working runtime after fixes: `torch 2.12.0.dev20260415+cu130`
-- Verified CUDA arch list includes `sm_100`
-- Verified device: `NVIDIA B200`
-- Verified TRIBE prediction shape on text input: `(5, 20484)`
-
-### Notes from the successful setup
-
-- The stock torch install on the image did **not** support B200 (`sm_100` missing).
-- Installing the official PyTorch nightly CUDA 13.0 build fixed GPU support.
-- `tribev2` text preprocessing also required the spaCy English large model:
-  `en_core_web_lg==3.8.0`.
-- The first text run downloads additional text/audio model artifacts, including
-  gated Hugging Face weights, so the first successful inference is materially
-  slower than subsequent calls.
-
-### Minimal setup sequence used on Northflank
+The Python inference service requires an NVIDIA B200 with CUDA 13.0 support.
+If you're running your own:
 
 ```bash
-apt-get update
-apt-get install -y ffmpeg libsndfile1 git
-
-cd /workspace/tribev2
-pip install -e .
-pip install -U "huggingface_hub[cli]"
-huggingface-cli login
-
-pip uninstall -y torch torchvision torchaudio
-pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu130
-
-python -m spacy download en_core_web_lg
-
-python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_arch_list()); print(torch.cuda.get_device_name(0))"
-python -u -c 'from tribev2 import TribeModel; model = TribeModel.from_pretrained("facebook/tribev2", cache_folder="./cache", device="cuda"); events = model.get_events_dataframe(text_path="sample.txt"); preds, segments = model.predict(events); print(preds.shape); print(len(segments))'
+cd backend
+uv sync                     # or: pip install -e .
+export HF_TOKEN=hf_xxx      # Hugging Face token for gated models
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Expected verification output:
+The brain mesh is pre-built. To regenerate:
 
-- `torch.cuda.is_available() == True`
-- `torch.cuda.get_arch_list()` contains `sm_100`
-- `torch.cuda.get_device_name(0) == NVIDIA B200`
-- TRIBE returns `(5, 20484)` on the smoke test text sample
-
-## Run dev
-
+```bash
+python scripts/export_mesh.py
+cp assets/fsaverage5.glb frontend/public/
 ```
-# Terminal 1
-cd frontend && bunx convex dev
-
-# Terminal 2
-cd frontend && bun run dev
-
-# Terminal 3 (needs GPU)
-cd backend && uvicorn app.main:app --reload
-```
-
-Open http://localhost:3000, type a message, hit **Start session**. The Convex action
-calls the Python service; activations + scores stream back; brain renders at 1 fps.
-
-## Roadmap
-
-- Clay API integration: pull candidate profiles → Claude Sonnet 4.6 drafts variants →
-  auto-populate the branch tree → winner sent via Clay native outreach.
-- Response rate tracking back into Convex.
 
 ## License
 
