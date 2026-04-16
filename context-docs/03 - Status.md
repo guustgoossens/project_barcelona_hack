@@ -1,25 +1,26 @@
-# 03 — Status (as of 2026-04-16 ~09h)
+# 03 — Status (as of 2026-04-16 ~14h)
 
 ## Current state
 
-**Full campaign workspace built.** React Flow tree with pan/zoom, floating macOS-style window (react-rnd) with 3 tabs (Notes/Brain/Leads), Big Five persona-adjusted scoring, real Clay leads seeded. TRIBE v2 inference API live on B200 GPU. UI uses Clay-inspired light theme.
+**Full campaign workspace built with human-in-the-loop AI optimization.** React Flow tree with pan/zoom, floating macOS-style 3-column inspector (react-rnd), Big Five persona-adjusted scoring, real Clay leads seeded. TRIBE v2 inference API live on B200 GPU. Self-improving learning loop: AI + human lessons compound across iterations. Clay integration visible throughout UI.
 
 ## What exists
 
 | Area | Path | State |
 |---|---|---|
 | Frontend | `frontend/` | TanStack Start + React Flow + react-rnd. Routes `/` (campaign hub), `/campaign/$id` (workspace). |
-| Campaign Hub | `frontend/src/routes/index.tsx` | Landing page with 3 campaign cards (1 active, 2 locked), Seed Demo button, Reset & Reseed button. |
-| Campaign Workspace | `frontend/src/routes/campaign.$id.tsx` | Full-screen React Flow tree + floating window with 3 tabs. All scoring logic (Kahneman peak-end rule). |
-| Horizontal Tree | `frontend/src/components/HorizontalTree.tsx` | React Flow (`@xyflow/react`) with custom VariantNode, horizontal layout, pan/zoom/drag. |
-| Floating Window | Uses `react-rnd` | macOS-style title bar (traffic lights), draggable by title bar, resizable from edges. Tabs: Notes, Brain, Leads. |
-| Brain Viz | `frontend/src/components/Brain.tsx` | React Three Fiber, fsaverage5 mesh (20,484 vertices), bloom post-processing. Unchanged from v1. |
-| Score Bars | `frontend/src/components/ScoreBars.tsx` | 5 funnel scores with gradient bars, persona-adjusted overlay with delta badges. |
-| Persona Scoring | `frontend/src/lib/persona.ts` | Big Five (OCEAN) → brain score weighting. Smooth interpolation: O→Curiosity×2, C→Attention×1.5, E→Motivation×2, A→Trust×1.5, N→Resistance×3. |
-| Convex | `frontend/convex/` | Schema: sessions, variants, campaigns, leads. Queries/mutations for all. `seedDemo` + `resetDemo` mutations. |
-| GPU inference (live) | `gpu/server.py` | FastAPI `/predict` on Northflank B200. Returns base64 fp16 `(T, 20484)` + 5 outreach-funnel scores. **Live at `https://app--jupyter-pytorch--zr8brwblqp2q.code.run`**. |
-| Seed Data | `frontend/convex/campaigns.ts` | Campaign: "Creative Branding Designer — Barcelona". 3 real Clay leads (Diego Troiano, Lluis Gimeno, Nilton Navarro). 3 email variants (generic → specific → best). |
-| Legacy components | `frontend/src/components/LeadCard.tsx`, `LeadList.tsx`, `LessonsPane.tsx`, `BranchTree.tsx` | Still exist but NOT used by campaign page. Campaign page has inline components (LeadsView, NotesView). |
+| Campaign Hub | `frontend/src/routes/index.tsx` | Hero branding, real stats (leads/variants/best score), Clay badge, single active campaign card. |
+| Campaign Workspace | `frontend/src/routes/campaign.$id.tsx` | Full-screen React Flow tree + floating 3-column window. Human-in-the-loop: inline edit, teach mode, auto-show personalized variants. |
+| Horizontal Tree | `frontend/src/components/HorizontalTree.tsx` | React Flow with custom VariantNode, score-pop animations, gradient edges, hypothesis badges. |
+| Floating Window | Uses `react-rnd` | macOS-style 3-column layout: Left (email + leads), Center (brain viz + timeline), Right (scores). |
+| Brain Viz | `frontend/src/components/Brain.tsx` | React Three Fiber, fsaverage5 mesh (20,484 vertices), jet colormap, auto-rotate. |
+| Score Bars | `frontend/src/components/ScoreBars.tsx` | 5 funnel scores with animated gradient bars, persona-adjusted overlay with delta badges. |
+| Persona Scoring | `frontend/src/lib/persona.ts` | Big Five (OCEAN) → brain score weighting. Smooth interpolation. |
+| Convex Backend | `frontend/convex/` | Schema: sessions, variants, campaigns, leads. Agent with 5 tools (including updateLessons). Learning loop via `learnFromScoring`. |
+| AI Agent | `frontend/convex/agent.ts` | Claude Sonnet 4.6 optimizer with 5 tools: getVariantScores, getLeadProfile, getCampaignLessons, createVariant, updateLessons. |
+| Learning Loop | `frontend/convex/actions.ts` | Auto-triggered after scoring: agent compares parent→child deltas, extracts reusable lessons, appends to campaign lessons. |
+| GPU inference | `gpu/server.py` | FastAPI `/predict` on Northflank B200. Returns base64 fp16 `(T, 20484)` + 5 outreach-funnel scores. |
+| Seed Data | `frontend/convex/campaigns.ts` | Campaign: "Creative Branding Designer — Barcelona". 8 real Clay leads with OCEAN profiles. 3 email variants. |
 
 ## What's done
 
@@ -30,43 +31,59 @@
 - [x] Brain heatmap threshold — only top 20% activated vertices light up
 - [x] Word-by-word segment mapping in API + WordStream component
 - [x] Convex schema: sessions, variants, campaigns, leads (with Big Five OCEAN)
-- [x] Campaign hub landing page (3 cards, 1 active, 2 locked)
-- [x] React Flow horizontal tree (pan, zoom, custom nodes, smoothstep edges)
-- [x] Floating macOS window via react-rnd (draggable, resizable)
-- [x] 3 tabs in window: Notes (markdown), Brain (3D viz + timeline + scores), Leads (OCEAN profiles)
+- [x] Campaign hub with hero branding, real stats, Clay badge
+- [x] React Flow horizontal tree (pan, zoom, custom nodes, gradient edges, score animations)
+- [x] Floating macOS window via react-rnd (3-column: email+leads / brain+timeline / scores)
 - [x] Big Five persona-adjusted scoring with smooth interpolation
-- [x] Real Clay leads seeded (Diego Troiano, Lluis Gimeno, Nilton Navarro)
+- [x] 8 real Clay leads seeded with OCEAN profiles and personality descriptions
 - [x] Reset & Reseed functionality
-- [x] Clay-inspired light theme (white bg, gray borders, subtle shadows)
+- [x] Clay branding visible throughout: header ("Powered by Clay"), leads panel badge, OCEAN "Enriched via Clay", home page badge
+- [x] "Send via Clay" button on best variant with toast notification (simulated)
+- [x] Claude Sonnet 4.6 agent with 5 tools (optimize, score lookup, lead profile, lessons, create variant)
+- [x] A/B hypothesis testing (control + hypothesis variants via agent)
+- [x] Self-improving learning loop: auto-lessons after each TRIBE v2 scoring
+- [x] Human-in-the-loop: inline Edit & Test (hover email → edit → "Test this edit" → new node)
+- [x] Human-in-the-loop: Teach mode in lessons drawer (human writes observations, agent reads them)
+- [x] Human-in-the-loop: auto-show personalized variant when selecting a lead
+- [x] Lessons drawer with counter, auto-updating badge, markdown rendering
+- [x] Score-pop animations on tree nodes and score bars
+- [x] Dead code cleanup (10 unused components removed)
+- [x] Score animations: bar-fill, score-pop, node-glow, toast transitions
 
-## What's still open / needs improvement
+## What's still open
 
-- [ ] **UI/UX polish** — the overall layout and visual quality need significant improvement. The tree nodes, the floating window, the tab content — all need to look more professional and polished. Clay's actual UI is much cleaner.
-- [ ] **Tree visual quality** — nodes should be more visually appealing, connections smoother, maybe add animations on selection.
-- [ ] **Window tabs content** — Brain tab needs better layout (brain viz + scores side by side). Leads tab needs a cleaner card design. Notes tab needs better typography.
 - [ ] **Connect Convex → GPU API**: `bunx convex env set PYTHON_INFERENCE_URL https://app--jupyter-pytorch--zr8brwblqp2q.code.run`
-- [ ] **Score variants before demo** — run `seedDemo`, wait for GPU scoring to complete on all 3 variants.
-- [ ] **Pre-cache brain data** — ensure all variants are scored and activations stored in Convex BEFORE the demo (no GPU latency on stage).
-- [ ] **🔴 CRITICAL: Email variant generation with Claude** — currently emails are hardcoded in seed. Must integrate Anthropic API (Claude Sonnet 4.6) to generate variants dynamically based on the lead's profile + campaign context + lessons learned. When user clicks "Optimize" or "Branch", Claude generates a new variant informed by the lead's Big Five profile, the campaign lessons markdown, and the previous variant's brain scores. This is a core differentiator for the demo — shows the AI iteration loop is real, not scripted.
-- [ ] **🔴 CRITICAL: Actually send emails via Clay** — integrate Clay's outreach API to send the winning variant directly from the app. During the demo, after brain-scoring and selecting the best variant, click "Send via Clay" → email goes out to the real lead. If we can show "we sent this email during the demo and got a reply" → instant win. Even sending to a teammate pretending to be the lead counts. The judge signal is: this is a real product, not a prototype.
-- [ ] **Response tracking** — track open/reply rates and feed back into lessons. Lower priority but would complete the self-improving loop.
+- [ ] **Pre-score variants before demo** — run `seedDemo`, wait for GPU scoring to complete
+- [ ] **Pre-cache brain data** — ensure all variants are scored and activations stored BEFORE demo
+- [ ] **Have backup screenshots** if GPU is slow during live demo
 
 ## Architecture
 
 ```
-Landing Page (/) → Campaign list → click active campaign
+Landing Page (/) → Campaign card → click to enter workspace
        ↓
 Campaign Workspace (/campaign/$id)
   ├── React Flow tree (full screen, pan/zoom)
-  │     └── Custom VariantNode components
+  │     └── Custom VariantNode (score animations, hypothesis badges)
   │           └── Click → opens floating window
-  ├── Floating Window (react-rnd, draggable/resizable)
-  │     ├── Tab: Notes → rendered markdown (campaign lessons)
-  │     ├── Tab: Brain → 3D brain + timeline + score bars
-  │     │     └── Persona-adjusted scores if lead selected
-  │     └── Tab: Leads → lead profiles with OCEAN bars
-  │           └── Click lead → adjusts Brain tab scores
-  └── Action bar → Branch / Optimize / Prune
+  ├── Floating Window (react-rnd, 3-column)
+  │     ├── Left: Email (inline editable) + Lead selector (Clay badge, OCEAN bars)
+  │     ├── Center: 3D brain viz + timeline scrubber
+  │     └── Right: Brain scores (persona-adjusted if lead selected)
+  ├── Action bar: Edit & Test / Branch / Optimize / Send via Clay / Prune
+  ├── Lessons drawer: auto-updating AI lessons + human "Teach" input
+  └── Learning loop: score → agent analyzes delta → updates lessons → next optimize reads them
+```
+
+## Human-in-the-loop flow
+
+```
+Human edits email ──→ "Test this edit" ──→ new node ──→ TRIBE scores
+Human teaches lesson ──→ appended to lessons ──→ agent reads on next optimize
+Human selects lead ──→ auto-shows personalized variant if exists
+Agent optimizes ──→ TRIBE scores ──→ agent extracts lesson ──→ lessons grow
+                                                                    ↓
+                                                         Next optimize starts smarter
 ```
 
 ## Tech Stack
@@ -79,22 +96,24 @@ Campaign Workspace (/campaign/$id)
 | 3D brain | React Three Fiber + Three.js |
 | Styling | Tailwind CSS 4 |
 | Icons | Lucide React |
-| Backend/DB | Convex |
+| Backend/DB | Convex (realtime) |
+| AI Agent | Claude Sonnet 4.6 via @ai-sdk/anthropic + @convex-dev/agent |
 | Brain model | TRIBE v2 (Meta) on B200 GPU via Northflank |
 | Persona scoring | Big Five (OCEAN) → brain score weights |
 
 ## Demo flow (4 minutes)
 
-1. **Landing page** (5s): "Here are our campaigns. We're targeting Creative Branding Designers in Barcelona."
-2. **Click campaign** → full-screen tree appears
-3. **Click v1** (15s): "Our first draft. Generic. Watch the brain — avoidance regions light up red. Score: -1.87."
-4. **Click v2.1** (30s): "We iterated twice. The brain changes — curiosity and trust fire up. Score improved."
-5. **Leads tab** → Click Diego (20s): "Diego is high Openness, creative risk-taker. Scores adapt to his personality."
-6. **Click Lluis** (20s): "Lluis is high Neuroticism. Same email, resistance explodes. We wouldn't send this one to him."
-7. **Click Nilton** (15s): "Nilton is extremely extraverted. Motivation spikes on collaborative language."
-8. **Notes tab** (10s): "The system learns. Specificity beats flattery. Same email, different brain."
-9. **Branch** (30s): New node → GPU scores → brain changes → scores improve.
-10. **Close** (10s): "We don't spray and pray. We spray and Clay."
+1. **Landing page** (5s): Hero branding, real stats, Clay badge. Click campaign.
+2. **Tree appears** → click v1 (15s): "Generic draft. Watch the brain — avoidance fires. Bad score."
+3. **Click v2.1** (20s): "We iterated. Curiosity and trust fire up. Score improved."
+4. **Select Diego** (15s): "Diego is high Openness. Auto-shows his personalized version."
+5. **Select Lluis** (15s): "Lluis is high Neuroticism. Same email, resistance explodes."
+6. **Edit & Test** (20s): Hover email → edit a sentence → "Test this edit" → new node, TRIBE scores.
+7. **Optimize** (20s): Click "Optimize for Nilton" → agent reads lessons + OCEAN → new variant.
+8. **Open Lessons** (15s): "4 lessons. The AI added a 5th after scoring. Watch."
+9. **Teach** (15s): Write "For architects, mention projects over awards" → Add. Agent reads this next time.
+10. **Send via Clay** (10s): Select best + lead → "Send to Diego via Clay" → toast.
+11. **Close** (5s): "We don't spray and pray. We spray and Clay."
 
 ## Dev commands
 
@@ -109,15 +128,17 @@ cd frontend && bun run dev
 cd frontend && bunx convex env set PYTHON_INFERENCE_URL https://app--jupyter-pytorch--zr8brwblqp2q.code.run
 ```
 
-## Key files for next agent
+## Key files
 
 | File | What it does | Lines |
 |---|---|---|
-| `frontend/src/routes/campaign.$id.tsx` | **Main campaign page** — all scoring logic, floating window, 3 tabs, inline sub-components | ~500 |
-| `frontend/src/components/HorizontalTree.tsx` | React Flow tree with custom nodes | ~155 |
-| `frontend/src/routes/index.tsx` | Landing page with campaign cards | ~115 |
-| `frontend/convex/campaigns.ts` | Convex functions + seed data + reset | ~175 |
-| `frontend/convex/schema.ts` | DB schema (sessions, variants, campaigns, leads) | ~70 |
+| `frontend/src/routes/campaign.$id.tsx` | Main workspace — 3-column window, inline edit, lessons drawer, all scoring logic | ~900 |
+| `frontend/src/components/HorizontalTree.tsx` | React Flow tree with animated score nodes | ~310 |
+| `frontend/src/routes/index.tsx` | Landing page with hero, real stats, Clay badge | ~140 |
+| `frontend/convex/agent.ts` | Claude Sonnet 4.6 agent with 5 tools | ~170 |
+| `frontend/convex/actions.ts` | GPU scoring + learning loop (learnFromScoring) | ~200 |
+| `frontend/convex/campaigns.ts` | Convex functions + 8 leads seed data | ~240 |
+| `frontend/convex/schema.ts` | DB schema (sessions, variants, campaigns, leads) | ~75 |
 | `frontend/src/lib/persona.ts` | Big Five → score weighting | ~50 |
-| `frontend/src/components/ScoreBars.tsx` | Score bars with persona overlay | ~100 |
-| `frontend/src/components/Brain.tsx` | 3D brain visualization (R3F) | ~125 |
+| `frontend/src/components/ScoreBars.tsx` | Animated score bars with persona overlay | ~120 |
+| `frontend/src/components/Brain.tsx` | 3D brain visualization (R3F) | ~115 |

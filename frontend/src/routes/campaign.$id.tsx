@@ -22,6 +22,12 @@ import {
   ChevronUp,
   Loader2,
   FlaskConical,
+  Send,
+  Check,
+  BookOpen,
+  Pencil,
+  CornerDownRight,
+  Plus,
 } from "lucide-react";
 
 export const Route = createFileRoute("/campaign/$id")({
@@ -46,6 +52,7 @@ function Campaign() {
   const archive = useMutation(api.variants.archive);
   const ensureThread = useMutation(api.chat.ensureThread);
   const sendMessage = useMutation(api.chat.sendMessage);
+  const updateLessons = useMutation(api.campaigns.updateLessons);
 
   const [selectedVariantId, setSelectedVariantId] =
     useState<Id<"variants"> | null>(null);
@@ -57,6 +64,16 @@ function Campaign() {
   const [branchOpen, setBranchOpen] = useState(false);
   const [branchText, setBranchText] = useState("");
   const [hypothesisText, setHypothesisText] = useState("");
+  const [sendToast, setSendToast] = useState<"idle" | "sending" | "sent">("idle");
+  const [lessonsOpen, setLessonsOpen] = useState(false);
+
+  // Human-in-the-loop: inline edit
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+
+  // Human-in-the-loop: teach mode
+  const [teachText, setTeachText] = useState("");
+  const [teachSaving, setTeachSaving] = useState(false);
 
   const handleSelectNode = useCallback(
     (nodeId: Id<"variants">) => {
@@ -64,6 +81,7 @@ function Campaign() {
       setWindowOpen(true);
       setShowPersonalized(false);
       setReasoningOpen(false);
+      setEditing(false);
     },
     [],
   );
@@ -255,6 +273,58 @@ Look up the campaign lessons and create an improved variant. Include your full r
     await sendMessage({ threadId, prompt });
   }
 
+  // Find the best variant for "Send via Clay"
+  const bestVariant = useMemo(() => {
+    let best: any = null;
+    for (const v of variants) {
+      if (v.status === "done" && v.scores) {
+        if (!best || v.scores.overall > best.scores.overall) best = v;
+      }
+    }
+    return best;
+  }, [variants]);
+
+  const isBestSelected = selectedVariant && bestVariant && selectedVariant._id === bestVariant._id;
+
+  function startEditing() {
+    if (!displayVariant) return;
+    setEditText(displayVariant.message);
+    setEditing(true);
+  }
+
+  async function submitEdit() {
+    if (!selectedVariantId || !editText.trim()) return;
+    // Don't create if text is identical
+    if (editText.trim() === displayVariant?.message) {
+      setEditing(false);
+      return;
+    }
+    await createChild({ parentId: selectedVariantId, message: editText.trim() });
+    setEditing(false);
+    setEditText("");
+  }
+
+  async function handleTeachSubmit() {
+    if (!teachText.trim() || !campaign) return;
+    setTeachSaving(true);
+    const insight = `\n\n## Human insight\n${teachText.trim()}\n`;
+    await updateLessons({
+      id: campaignId,
+      lessonsMarkdown: campaign.lessonsMarkdown.trimEnd() + insight,
+    });
+    setTeachText("");
+    setTeachSaving(false);
+  }
+
+  async function handleSendViaClay() {
+    if (sendToast !== "idle") return;
+    setSendToast("sending");
+    // Simulate sending
+    await new Promise((r) => setTimeout(r, 1500));
+    setSendToast("sent");
+    setTimeout(() => setSendToast("idle"), 3000);
+  }
+
   if (!campaign) {
     return (
       <div className="h-[calc(100dvh-2.75rem)] flex items-center justify-center bg-[#FAFAFA]">
@@ -273,6 +343,18 @@ Look up the campaign lessons and create an improved variant. Include your full r
         <span className="text-xs text-gray-400">
           {variants.filter((v: any) => v.status === "done").length} scored · {leads.length} leads
         </span>
+        <div className="ml-auto">
+          <button
+            onClick={() => setLessonsOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Lessons
+            <span className="bg-gray-100 text-gray-500 text-[10px] font-mono px-1.5 py-0.5 rounded-full">
+              {(campaign.lessonsMarkdown.match(/^## /gm) || []).length}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* ── MAIN AREA ── */}
@@ -419,35 +501,99 @@ Look up the campaign lessons and create an improved variant. Include your full r
                         </div>
                       )}
 
-                      {/* Email text */}
+                      {/* Email text — editable inline */}
                       <div className="text-sm text-gray-700 leading-relaxed">
-                        {displayVariant?.message && matrix ? (
-                          <WordStream
-                            message={displayVariant.message}
-                            T={matrix.T}
-                            timestep={timestep}
-                          />
+                        {editing ? (
+                          <div className="flex flex-col gap-2">
+                            <textarea
+                              autoFocus
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              rows={8}
+                              className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2.5 rounded-lg border border-blue-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none bg-blue-50/30"
+                            />
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={submitEdit}
+                                disabled={!editText.trim() || editText.trim() === displayVariant?.message}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors"
+                              >
+                                <CornerDownRight className="w-3 h-3" />
+                                Test this edit
+                              </button>
+                              <button
+                                onClick={() => setEditing(false)}
+                                className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              {editText.trim() !== displayVariant?.message && (
+                                <span className="text-[10px] text-blue-500 ml-auto">
+                                  Will create a new branch
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         ) : (
-                          <p className="whitespace-pre-wrap text-sm text-gray-600">
-                            {displayVariant?.message}
-                          </p>
+                          <div className="group/email relative">
+                            {displayVariant?.message && matrix ? (
+                              <WordStream
+                                message={displayVariant.message}
+                                T={matrix.T}
+                                timestep={timestep}
+                              />
+                            ) : (
+                              <p className="whitespace-pre-wrap text-sm text-gray-600">
+                                {displayVariant?.message}
+                              </p>
+                            )}
+                            <button
+                              onClick={startEditing}
+                              className="absolute top-0 right-0 p-1.5 rounded-lg bg-white/80 border border-gray-200 text-gray-400 hover:text-gray-700 hover:border-gray-300 opacity-0 group-hover/email:opacity-100 transition-all shadow-sm"
+                              title="Edit & test variant"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
                     <div className="p-4">
-                      <h4 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                        Lead
-                      </h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                          Lead
+                        </h4>
+                        <span className="flex items-center gap-1 text-[9px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full font-medium">
+                          <span className="h-2.5 w-2.5 rounded-sm bg-orange-500 flex items-center justify-center shrink-0">
+                            <span className="h-1 w-1 rounded-full bg-white" />
+                          </span>
+                          Clay
+                        </span>
+                      </div>
                       <div className="flex flex-col gap-2">
                         {leads.map((lead: any) => {
                           const isSel = selectedLeadId === lead._id;
+                          // Check if a personalized variant already exists for this lead
+                          const hasPersonalized = selectedVariantId && variants.some(
+                            (v: any) =>
+                              v.parentId === selectedVariantId &&
+                              v.leadId === lead._id &&
+                              v.status !== "archived",
+                          );
                           return (
                             <button
                               key={lead._id}
                               onClick={() => {
-                                setSelectedLeadId(isSel ? null : lead._id);
-                                setShowPersonalized(false);
+                                if (isSel) {
+                                  setSelectedLeadId(null);
+                                  setShowPersonalized(false);
+                                } else {
+                                  setSelectedLeadId(lead._id);
+                                  // Auto-show personalized variant if one exists
+                                  setShowPersonalized(!!hasPersonalized);
+                                }
                                 setReasoningOpen(false);
+                                setEditing(false);
                               }}
                               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all ${
                                 isSel
@@ -467,22 +613,28 @@ Look up the campaign lessons and create an improved variant. Include your full r
                         })}
                       </div>
                       {selectedLead && (
-                        <div className="mt-3 flex gap-1">
-                          {(["o", "c", "e", "a", "n"] as const).map((k, i) => {
-                            const colors = ["bg-purple-500", "bg-blue-500", "bg-amber-500", "bg-emerald-500", "bg-rose-500"];
-                            const labels = ["O", "C", "E", "A", "N"];
-                            return (
-                              <div key={k} className="flex-1 text-center">
-                                <div className="text-[8px] text-gray-400 mb-0.5">{labels[i]}</div>
-                                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${colors[i]}`}
-                                    style={{ width: `${selectedLead.ocean[k] * 100}%` }}
-                                  />
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">OCEAN Profile</span>
+                            <span className="text-[9px] text-orange-500 font-medium">Enriched via Clay</span>
+                          </div>
+                          <div className="flex gap-1">
+                            {(["o", "c", "e", "a", "n"] as const).map((k, i) => {
+                              const colors = ["bg-purple-500", "bg-blue-500", "bg-amber-500", "bg-emerald-500", "bg-rose-500"];
+                              const labels = ["O", "C", "E", "A", "N"];
+                              return (
+                                <div key={k} className="flex-1 text-center">
+                                  <div className="text-[8px] text-gray-400 mb-0.5">{labels[i]}</div>
+                                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full bar-animate ${colors[i]}`}
+                                      style={{ width: `${selectedLead.ocean[k] * 100}%` }}
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -580,6 +732,13 @@ Look up the campaign lessons and create an improved variant. Include your full r
                 {/* Action Bar */}
                 <div className="border-t border-gray-200 px-4 py-3 flex items-center gap-2 bg-gray-50/50 shrink-0">
                   <button
+                    onClick={startEditing}
+                    className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Edit &amp; Test
+                  </button>
+                  <button
                     onClick={openBranch}
                     className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-semibold transition-colors"
                   >
@@ -600,7 +759,27 @@ Look up the campaign lessons and create an improved variant. Include your full r
                       ? `Optimize for ${selectedLead.name.split(" ")[0]}`
                       : "Optimize"}
                   </button>
-                  {selectedVariant.status !== "archived" && (
+                  {isBestSelected && selectedLead && (
+                    <button
+                      onClick={handleSendViaClay}
+                      disabled={sendToast !== "idle"}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 text-white rounded-lg text-sm font-semibold transition-colors ml-auto"
+                    >
+                      {sendToast === "sending" ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : sendToast === "sent" ? (
+                        <Check className="w-3.5 h-3.5" />
+                      ) : (
+                        <Send className="w-3.5 h-3.5" />
+                      )}
+                      {sendToast === "sending"
+                        ? "Sending..."
+                        : sendToast === "sent"
+                          ? `Sent to ${selectedLead.name.split(" ")[0]}!`
+                          : `Send to ${selectedLead.name.split(" ")[0]} via Clay`}
+                    </button>
+                  )}
+                  {!(isBestSelected && selectedLead) && selectedVariant.status !== "archived" && (
                     <button
                       onClick={() => selectedVariantId && archive({ id: selectedVariantId })}
                       className="flex items-center gap-1.5 px-3 py-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg text-sm transition-colors ml-auto"
@@ -613,6 +792,105 @@ Look up the campaign lessons and create an improved variant. Include your full r
               </div>
             </Rnd>
           </>
+        )}
+
+        {/* ── LESSONS DRAWER ── */}
+        {lessonsOpen && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/20 z-40"
+              onClick={() => setLessonsOpen(false)}
+            />
+            <div className="fixed top-0 right-0 h-full w-[420px] max-w-[90vw] bg-white shadow-2xl border-l border-gray-200 z-50 flex flex-col rise-in">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-gray-900" />
+                  <span className="text-sm font-semibold text-gray-900">Campaign Lessons</span>
+                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-mono px-1.5 py-0.5 rounded-full">
+                    auto-updating
+                  </span>
+                </div>
+                <button
+                  onClick={() => setLessonsOpen(false)}
+                  className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Info banner */}
+              <div className="px-5 py-3 bg-blue-50 border-b border-blue-100 shrink-0">
+                <p className="text-[11px] text-blue-700 leading-relaxed">
+                  The AI agent updates these lessons automatically after each variant is scored by TRIBE v2. Patterns compound across iterations.
+                </p>
+              </div>
+
+              {/* Lessons content */}
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <div className="prose prose-sm max-w-none text-gray-700">
+                  <LessonsMarkdown text={campaign.lessonsMarkdown} />
+                </div>
+              </div>
+
+              {/* Teach — human writes a lesson */}
+              <div className="px-5 py-3 border-t border-gray-100 shrink-0">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Plus className="w-3 h-3 text-gray-400" />
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                    Teach the AI
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <textarea
+                    value={teachText}
+                    onChange={(e) => setTeachText(e.target.value)}
+                    rows={2}
+                    className="flex-1 text-xs text-gray-700 leading-relaxed px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none"
+                    placeholder="e.g. For architects, mention specific projects over awards..."
+                  />
+                  <button
+                    onClick={handleTeachSubmit}
+                    disabled={!teachText.trim() || teachSaving}
+                    className="self-end px-3 py-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors shrink-0"
+                  >
+                    {teachSaving ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      "Add"
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50 shrink-0">
+                <p className="text-[10px] text-gray-400">
+                  {(campaign.lessonsMarkdown.match(/^## /gm) || []).length} insights ·
+                  AI + human lessons compound across iterations
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── SEND TOAST ── */}
+        {sendToast === "sent" && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 toast-enter">
+            <div className="flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl">
+              <div className="h-8 w-8 rounded-lg bg-orange-500 flex items-center justify-center shrink-0">
+                <Check className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold">
+                  Email sent via Clay
+                </div>
+                <div className="text-xs text-gray-400">
+                  Delivered to {selectedLead?.name} at {selectedLead?.company}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ── BRANCH MODAL ── */}
@@ -716,20 +994,32 @@ Look up the campaign lessons and create an improved variant. Include your full r
   );
 }
 
-// Simple markdown-to-elements renderer for reasoning display
+// Simple markdown-to-elements renderer
+function renderMarkdownLine(line: string, i: number) {
+  if (line.startsWith("### ")) return <h3 key={i} className="font-bold text-gray-800 mt-2 mb-1">{line.slice(4)}</h3>;
+  if (line.startsWith("## ")) return <h2 key={i} className="font-bold text-gray-900 mt-3 mb-1">{line.slice(3)}</h2>;
+  if (line.startsWith("# ")) return <h1 key={i} className="font-bold text-gray-900 mt-3 mb-1">{line.slice(2)}</h1>;
+  if (line.startsWith("- ")) return <li key={i} className="ml-3 list-disc">{renderInline(line.slice(2))}</li>;
+  if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-semibold text-gray-800">{line.slice(2, -2)}</p>;
+  if (line.trim() === "") return <br key={i} />;
+  return <p key={i}>{renderInline(line)}</p>;
+}
+
+function renderInline(text: string) {
+  // Bold **text**
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i} className="font-semibold text-gray-900">{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 function ReasoningMarkdown({ text }: { text: string }) {
-  const lines = text.split("\n");
-  return (
-    <>
-      {lines.map((line, i) => {
-        if (line.startsWith("### ")) return <h3 key={i} className="font-bold text-gray-800 mt-2 mb-1">{line.slice(4)}</h3>;
-        if (line.startsWith("## ")) return <h2 key={i} className="font-bold text-gray-900 mt-3 mb-1">{line.slice(3)}</h2>;
-        if (line.startsWith("# ")) return <h1 key={i} className="font-bold text-gray-900 mt-3 mb-1">{line.slice(2)}</h1>;
-        if (line.startsWith("- ")) return <li key={i} className="ml-3 list-disc">{line.slice(2)}</li>;
-        if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-semibold text-gray-800">{line.slice(2, -2)}</p>;
-        if (line.trim() === "") return <br key={i} />;
-        return <p key={i}>{line}</p>;
-      })}
-    </>
-  );
+  return <>{text.split("\n").map(renderMarkdownLine)}</>;
+}
+
+function LessonsMarkdown({ text }: { text: string }) {
+  return <>{text.split("\n").map(renderMarkdownLine)}</>;
 }

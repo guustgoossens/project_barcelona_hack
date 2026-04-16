@@ -59,6 +59,31 @@ const getCampaignLessons = createTool({
   },
 });
 
+const updateLessons = createTool({
+  description:
+    "Append new insights to the campaign's lessons markdown. Called after analyzing brain score changes between parent and child variants. Write concise, actionable lessons — what changed, why it worked or failed, and what to do next time. Do NOT rewrite existing lessons, only append new ones.",
+  inputSchema: z.object({
+    campaignId: z.string().describe("The campaign ID"),
+    newInsights: z
+      .string()
+      .describe(
+        "Markdown-formatted insights to append. Use ## headers for each insight. Include: what changed, score deltas, why it worked/failed, and a rule for future variants.",
+      ),
+  }),
+  execute: async (ctx, input): Promise<Record<string, unknown>> => {
+    const campaign = await ctx.runQuery(api.campaigns.get, {
+      id: input.campaignId as any,
+    });
+    if (!campaign) return { error: "Campaign not found" };
+    const updated = campaign.lessonsMarkdown.trimEnd() + "\n\n" + input.newInsights.trim() + "\n";
+    await ctx.runMutation(api.campaigns.updateLessons, {
+      id: input.campaignId as any,
+      lessonsMarkdown: updated,
+    });
+    return { status: "Lessons updated", totalLength: updated.length };
+  },
+});
+
 const createVariant = createTool({
   description:
     "Create a new email variant as a child of an existing variant, optionally linked to a specific lead. The variant will automatically be scored by the GPU brain model. Always include your full reasoning (psychological analysis, strategy, and per-sentence breakdown) in the reasoning field.",
@@ -124,12 +149,23 @@ Key principles:
 - High-Openness profiles are drawn to novelty and creative framing
 - The first and last sentences matter disproportionately (Kahneman's peak-end rule)
 
-Create 1 variant per optimization round. Put ALL your analysis and reasoning into the createVariant tool's "reasoning" field (markdown format). Include: lead psychology analysis, strategy, campaign lessons applied, and a per-sentence breakdown explaining what each part of the email targets neurally. Do not write long messages outside the tool call — the reasoning field IS the deliverable.`,
+## Workflow
+
+1. **Before creating a variant**: Read campaign lessons with getCampaignLessons. Apply every relevant lesson.
+2. **Create 1 variant** per optimization round. Put ALL your analysis into the createVariant tool's "reasoning" field (markdown). Include: lead psychology analysis, strategy, campaign lessons applied, and a per-sentence breakdown explaining what each part targets neurally.
+3. **After a variant is scored** (when you can see scores on the new variant): Compare parent vs child scores. If a clear pattern emerges (a score improved ≥0.1 or dropped ≥0.1), call updateLessons with a concise insight:
+   - What you changed in the email
+   - Which scores moved and by how much
+   - Why you think it worked or failed (map to brain regions)
+   - A reusable rule for future variants
+
+Do not write long messages outside tool calls — the reasoning and lessons fields ARE the deliverables. The lessons file is the campaign's memory — it compounds across every variant. Write lessons that your future self can act on.`,
   tools: {
     getVariantScores,
     getLeadProfile,
     getCampaignLessons,
     createVariant,
+    updateLessons,
   },
   stopWhen: stepCountIs(8),
 });

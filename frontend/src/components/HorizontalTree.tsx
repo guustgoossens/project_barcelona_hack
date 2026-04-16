@@ -191,7 +191,7 @@ function VariantNode({ data }: NodeProps) {
       >
         {/* Score band */}
         <div
-          className="px-3 py-2 flex items-center justify-between"
+          className={`px-3 py-2 flex items-center justify-between ${variant.status === "done" ? "node-scored" : ""}`}
           style={{
             background: score === undefined
               ? "#F9FAFB"
@@ -201,7 +201,7 @@ function VariantNode({ data }: NodeProps) {
           }}
         >
           {score !== undefined ? (
-            <span className="flex items-baseline gap-0.5">
+            <span className="flex items-baseline gap-0.5 score-pop-in">
               <span
                 className={`text-xl font-extrabold font-mono ${isPositive ? "text-emerald-600" : "text-red-600"}`}
               >
@@ -211,7 +211,12 @@ function VariantNode({ data }: NodeProps) {
             </span>
           ) : (
             <span className="text-sm font-medium text-gray-400">
-              {variant.status === "scoring" ? "Scoring..." : variant.status === "pending" ? "Queued" : "—"}
+              {variant.status === "scoring" ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Scoring...
+                </span>
+              ) : variant.status === "pending" ? "Queued" : "\u2014"}
             </span>
           )}
           {isBest && (

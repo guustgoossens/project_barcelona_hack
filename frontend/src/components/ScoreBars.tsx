@@ -26,7 +26,7 @@ function bar(v: number, tone: "good" | "bad") {
   return (
     <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
       <div
-        className="h-full rounded-full transition-all duration-300"
+        className="h-full rounded-full bar-animate"
         style={{ width: `${pct}%`, background: gradient }}
       />
     </div>
@@ -85,7 +85,7 @@ export default function ScoreBars({ scores, personaScores, leadName }: Props) {
               <span className="text-[11px] text-gray-500 font-medium">Overall</span>
               <span className="flex items-baseline gap-0.5">
                 <span
-                  className={`text-base font-mono font-extrabold ${display100 >= 50 ? "text-emerald-600" : "text-rose-500"}`}
+                  className={`text-base font-mono font-extrabold score-pop-in ${display100 >= 50 ? "text-emerald-600" : "text-rose-500"}`}
                 >
                   {display100}
                 </span>
