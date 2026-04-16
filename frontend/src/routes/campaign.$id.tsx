@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Rnd } from "react-rnd";
@@ -28,6 +28,8 @@ import {
   Pencil,
   CornerDownRight,
   Plus,
+  RotateCcw,
+  Info,
 } from "lucide-react";
 
 export const Route = createFileRoute("/campaign/$id")({
@@ -40,6 +42,7 @@ const HEMISPHERE_SPLIT = 10242;
 function Campaign() {
   const { id } = Route.useParams();
   const campaignId = id as Id<"campaigns">;
+  const navigate = useNavigate();
 
   const campaign = useQuery(api.campaigns.get, { id: campaignId });
   const leads =
@@ -53,6 +56,8 @@ function Campaign() {
   const ensureThread = useMutation(api.chat.ensureThread);
   const sendMessage = useMutation(api.chat.sendMessage);
   const updateLessons = useMutation(api.campaigns.updateLessons);
+  const resetDemo = useMutation(api.campaigns.resetDemo);
+  const seedDemo = useMutation(api.campaigns.seedDemo);
 
   const [selectedVariantId, setSelectedVariantId] =
     useState<Id<"variants"> | null>(null);
@@ -74,6 +79,7 @@ function Campaign() {
   // Human-in-the-loop: teach mode
   const [teachText, setTeachText] = useState("");
   const [teachSaving, setTeachSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const handleSelectNode = useCallback(
     (nodeId: Id<"variants">) => {
@@ -316,6 +322,24 @@ Look up the campaign lessons and create an improved variant. Include your full r
     setTeachSaving(false);
   }
 
+  async function handleDemoReset() {
+    if (resetting) return;
+    setResetting(true);
+    setWindowOpen(false);
+    setSelectedVariantId(null);
+    setSelectedLeadId(null);
+    setEditing(false);
+    setLessonsOpen(false);
+    setSendToast("idle");
+    await resetDemo({});
+    const result = await seedDemo({});
+    setResetting(false);
+    // Navigate to new campaign (old ID is now stale)
+    if (result?.campaignId) {
+      navigate({ to: "/campaign/$id", params: { id: result.campaignId } });
+    }
+  }
+
   async function handleSendViaClay() {
     if (sendToast !== "idle") return;
     setSendToast("sending");
@@ -339,20 +363,44 @@ Look up the campaign lessons and create an improved variant. Include your full r
       <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex items-center gap-3 shrink-0">
         <div className="h-2 w-2 rounded-full bg-emerald-500" />
         <h1 className="text-sm font-bold text-gray-900">{campaign.name}</h1>
-        <span className="text-xs text-gray-400">·</span>
-        <span className="text-xs text-gray-400">
-          {variants.filter((v: any) => v.status === "done").length} scored · {leads.length} leads
-        </span>
-        <div className="ml-auto">
+
+        {/* Live stats */}
+        <div className="flex items-center gap-2 ml-2">
+          <span className="text-[10px] font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+            {variants.filter((v: any) => v.status === "done").length} scored
+          </span>
+          <span className="text-[10px] font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+            {leads.length} leads
+          </span>
+          <span className="text-[10px] font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+            {(campaign.lessonsMarkdown.match(/^## /gm) || []).length} lessons
+          </span>
+          {bestVariant && (
+            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold ${
+              toScore100(bestVariant.scores.overall) >= 50
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-rose-50 text-rose-700"
+            }`}>
+              best: {toScore100(bestVariant.scores.overall)}/100
+            </span>
+          )}
+        </div>
+
+        <div className="ml-auto flex items-center gap-1">
           <button
             onClick={() => setLessonsOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <BookOpen className="w-3.5 h-3.5" />
             Lessons
-            <span className="bg-gray-100 text-gray-500 text-[10px] font-mono px-1.5 py-0.5 rounded-full">
-              {(campaign.lessonsMarkdown.match(/^## /gm) || []).length}
-            </span>
+          </button>
+          <button
+            onClick={handleDemoReset}
+            disabled={resetting}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+            title="Reset demo — clears all data and reseeds"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${resetting ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
@@ -364,7 +412,10 @@ Look up the campaign lessons and create an improved variant. Include your full r
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
               Draft Evolution
             </span>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-[11px] text-gray-400 mt-1">
+              Each node is an email variant scored by TRIBE v2 (Meta's brain model)
+            </p>
+            <p className="text-[10px] text-gray-300 mt-0.5">
               Click a node to inspect · Scroll to zoom · Drag to pan
             </p>
           </div>
@@ -615,7 +666,15 @@ Look up the campaign lessons and create an improved variant. Include your full r
                       {selectedLead && (
                         <div className="mt-3">
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">OCEAN Profile</span>
+                            <span className="flex items-center gap-1 text-[9px] font-semibold text-gray-400 uppercase tracking-wider">
+                              OCEAN Profile
+                              <span className="group/ocean relative">
+                                <Info className="w-2.5 h-2.5 text-gray-300 cursor-help" />
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/ocean:block w-48 bg-gray-900 text-white text-[10px] leading-relaxed p-2.5 rounded-lg shadow-xl z-50 pointer-events-none">
+                                  Big Five personality traits. High O = curiosity boost. High N = resistance penalty. Scores adjust per trait.
+                                </span>
+                              </span>
+                            </span>
                             <span className="text-[9px] text-orange-500 font-medium">Enriched via Clay</span>
                           </div>
                           <div className="flex gap-1">
@@ -718,9 +777,17 @@ Look up the campaign lessons and create an improved variant. Include your full r
 
                   {/* RIGHT: Scores */}
                   <div className="w-[22%] border-l border-gray-200 p-4 overflow-y-auto shrink-0">
-                    <h4 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                      Brain Scores
-                    </h4>
+                    <div className="flex items-center gap-1 mb-3">
+                      <h4 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                        Brain Scores
+                      </h4>
+                      <div className="group/tip relative">
+                        <Info className="w-3 h-3 text-gray-300 cursor-help" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/tip:block w-52 bg-gray-900 text-white text-[10px] leading-relaxed p-2.5 rounded-lg shadow-xl z-50 pointer-events-none">
+                          Predicted by Meta's TRIBE v2 from fMRI data. Scored using Kahneman's peak-end rule: 40% mean + 20% first + 20% worst + 20% last impression.
+                        </div>
+                      </div>
+                    </div>
                     <ScoreBars
                       scores={scores}
                       personaScores={personaScores}

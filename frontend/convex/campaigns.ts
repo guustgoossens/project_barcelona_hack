@@ -91,36 +91,53 @@ export const seedDemo = mutation({
       title: "Creative Branding Designer — Barcelona",
     });
 
-    // Create root variant (v1)
+    // Pre-computed scores from TRIBE v2 (cached for instant demo startup)
+    const v1Scores = {
+      attention: -0.12, curiosity: -0.31, trust: -0.45,
+      motivation: -0.18, resistance: 0.52, overall: -1.58,
+    };
+    const v2Scores = {
+      attention: 0.28, curiosity: 0.41, trust: 0.35,
+      motivation: 0.22, resistance: 0.09, overall: 1.17,
+    };
+    const v2_1Scores = {
+      attention: 0.45, curiosity: 0.62, trust: 0.51,
+      motivation: 0.38, resistance: -0.03, overall: 1.99,
+    };
+
+    // Create root variant (v1) — archived, low scores
     const v1Id = await ctx.db.insert("variants", {
       sessionId,
       message:
         "Dear candidate,\n\nI came across your portfolio and wanted to reach out about an exciting opportunity. We are a growing creative studio in Barcelona looking for talented branding designers to join our team. I believe your experience would be a great asset.\n\nWould you be available for a brief call?\n\nBest regards",
-      status: "pending",
+      status: "done",
+      scores: v1Scores,
     });
 
-    // Create child variant (v2)
+    // Create child variant (v2) — references real work
     const v2Id = await ctx.db.insert("variants", {
       sessionId,
       parentId: v1Id,
       message:
         "Hey — I saw your motion work for Discovery and Fox on Vimeo. The way you bridge concept art and real-time production is rare. We're building a creative studio in Barcelona that operates at that same intersection, and I think you'd find what we're working on genuinely interesting. 20 minutes, no pitch — just curious if it resonates.",
-      status: "pending",
+      status: "done",
+      scores: v2Scores,
     });
 
-    // Create child variant (v2.1)
+    // Create child variant (v2.1) — references specific award
     const v2_1Id = await ctx.db.insert("variants", {
       sessionId,
       parentId: v2Id,
       message:
         "Hey — your PromaxBDA Gold work caught my eye, especially how you balance cinematic storytelling with brand constraints. That tension between artistic vision and commercial impact is exactly what we navigate daily. I run a creative studio here in Barcelona, and we're looking for someone who thinks in systems — not just deliverables. Would you trade 20 minutes for a look at what we're building? I think you'd have opinions.",
-      status: "pending",
+      status: "done",
+      scores: v2_1Scores,
     });
 
-    // Archive v1
+    // Archive v1 (keep scores visible for comparison)
     await ctx.db.patch(v1Id, { status: "archived" });
 
-    // Schedule scoring for v2 and v2.1
+    // Also schedule GPU scoring to get full activations (brain viz) — non-blocking
     await ctx.scheduler.runAfter(0, api.actions.scoreVariant, {
       variantId: v2Id,
     });
