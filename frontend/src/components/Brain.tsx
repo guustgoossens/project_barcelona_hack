@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { writeVertexColors, computeThreshold } from "../lib/colormap";
 import type { ActivationMatrix } from "../lib/activations";
@@ -37,9 +36,9 @@ function BrainMesh({
     const n = g.attributes.position.count;
     const colorArr = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
-      colorArr[i * 3 + 0] = 0.04;
-      colorArr[i * 3 + 1] = 0.03;
-      colorArr[i * 3 + 2] = 0.08;
+      colorArr[i * 3 + 0] = 0.82;
+      colorArr[i * 3 + 1] = 0.84;
+      colorArr[i * 3 + 2] = 0.86;
     }
     g.setAttribute("color", new THREE.BufferAttribute(colorArr, 3));
     g.computeVertexNormals();
@@ -69,16 +68,16 @@ function BrainMesh({
 
     if (!showLeft) {
       for (let i = 0; i < hemisphereSplit; i++) {
-        colors[i * 3 + 0] = 0.04;
-        colors[i * 3 + 1] = 0.03;
-        colors[i * 3 + 2] = 0.08;
+        colors[i * 3 + 0] = 0.82;
+        colors[i * 3 + 1] = 0.84;
+        colors[i * 3 + 2] = 0.86;
       }
     }
     if (!showRight) {
       for (let i = hemisphereSplit; i < count; i++) {
-        colors[i * 3 + 0] = 0.04;
-        colors[i * 3 + 1] = 0.03;
-        colors[i * 3 + 2] = 0.08;
+        colors[i * 3 + 0] = 0.82;
+        colors[i * 3 + 1] = 0.84;
+        colors[i * 3 + 2] = 0.86;
       }
     }
     colorAttr.needsUpdate = true;
@@ -98,11 +97,11 @@ export default function Brain(props: Props) {
       dpr={[1, 1.5]}
       frameloop="always"
       gl={{ antialias: true }}
-      style={{ background: "#06060f" }}
+      style={{ background: "#F3F4F6" }}
     >
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[60, 80, 100]} intensity={0.9} />
-      <directionalLight position={[-80, -40, 60]} intensity={0.3} />
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[60, 80, 100]} intensity={1.0} />
+      <directionalLight position={[-80, -40, 60]} intensity={0.5} />
       <BrainMesh {...props} />
       <OrbitControls
         autoRotate
@@ -111,14 +110,6 @@ export default function Brain(props: Props) {
         dampingFactor={0.05}
         makeDefault
       />
-      <EffectComposer>
-        <Bloom
-          luminanceThreshold={0.25}
-          luminanceSmoothing={0.9}
-          intensity={0.7}
-          mipmapBlur
-        />
-      </EffectComposer>
     </Canvas>
   );
 }
