@@ -94,6 +94,8 @@ function variantsToFlow(variants: Variant[], selectedId: string | null) {
         id: v._id,
         type: "variantNode",
         position: { x: depth * X_GAP, y: yOffset * Y_GAP },
+        sourcePosition: Position.Right,
+        targetPosition: Position.Left,
         data: { variant: v, selected: v._id === selectedId, isBest: v._id === bestId },
       });
       return 1;
@@ -122,6 +124,8 @@ function variantsToFlow(variants: Variant[], selectedId: string | null) {
       id: v._id,
       type: "variantNode",
       position: { x: depth * X_GAP, y: centerY * Y_GAP },
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
       data: { variant: v, selected: v._id === selectedId, isBest: v._id === bestId },
     });
 
