@@ -388,8 +388,8 @@ Look up the campaign lessons and create an improved variant. Include your full r
 
         <div className="ml-auto flex items-center gap-1">
           <button
-            onClick={() => setLessonsOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            onClick={() => setLessonsOpen((o) => !o)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${lessonsOpen ? "text-gray-900 bg-gray-100" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"}`}
           >
             <BookOpen className="w-3.5 h-3.5" />
             Lessons
@@ -826,7 +826,7 @@ Look up the campaign lessons and create an improved variant. Include your full r
                       ? `Optimize for ${selectedLead.name.split(" ")[0]}`
                       : "Optimize"}
                   </button>
-                  {isBestSelected && selectedLead && (
+                  {selectedLead && selectedVariant.status === "done" && (
                     <button
                       onClick={handleSendViaClay}
                       disabled={sendToast !== "idle"}
@@ -846,7 +846,7 @@ Look up the campaign lessons and create an improved variant. Include your full r
                           : `Send to ${selectedLead.name.split(" ")[0]} via Clay`}
                     </button>
                   )}
-                  {!(isBestSelected && selectedLead) && selectedVariant.status !== "archived" && (
+                  {!(selectedLead && selectedVariant.status === "done") && selectedVariant.status !== "archived" && (
                     <button
                       onClick={() => selectedVariantId && archive({ id: selectedVariantId })}
                       className="flex items-center gap-1.5 px-3 py-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg text-sm transition-colors ml-auto"
@@ -861,50 +861,63 @@ Look up the campaign lessons and create an improved variant. Include your full r
           </>
         )}
 
-        {/* ── LESSONS DRAWER ── */}
+        {/* ── LESSONS WINDOW ── */}
         {lessonsOpen && (
-          <>
-            <div
-              className="fixed inset-0 bg-black/20 z-40"
-              onClick={() => setLessonsOpen(false)}
-            />
-            <div className="fixed top-0 right-0 h-full w-[420px] max-w-[90vw] bg-white shadow-2xl border-l border-gray-200 z-50 flex flex-col rise-in">
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+          <Rnd
+            default={{
+              x: window.innerWidth - 440,
+              y: 20,
+              width: 410,
+              height: Math.min(window.innerHeight - 80, 700),
+            }}
+            minWidth={280}
+            minHeight={400}
+            bounds="parent"
+            dragHandleClassName="lessons-drag-handle"
+            className="z-20"
+            style={{ position: "absolute" }}
+          >
+            <div className="w-full h-full bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+              {/* Title Bar */}
+              <div className="lessons-drag-handle flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 shrink-0 cursor-grab active:cursor-grabbing select-none">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setLessonsOpen(false)}
+                    className="w-3 h-3 rounded-full bg-[#FF5F57] hover:brightness-90 transition-all"
+                    title="Close"
+                  />
+                  <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
+                  <div className="w-3 h-3 rounded-full bg-[#28C840]" />
+                </div>
                 <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-gray-900" />
-                  <span className="text-sm font-semibold text-gray-900">Campaign Lessons</span>
-                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-mono px-1.5 py-0.5 rounded-full">
+                  <BookOpen className="w-3.5 h-3.5 text-gray-500" />
+                  <span className="text-xs font-semibold text-gray-600">Campaign Lessons</span>
+                  <span className="bg-emerald-50 text-emerald-700 text-[9px] font-mono px-1.5 py-0.5 rounded-full">
                     auto-updating
                   </span>
                 </div>
-                <button
-                  onClick={() => setLessonsOpen(false)}
-                  className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="w-[52px]" />
               </div>
 
               {/* Info banner */}
-              <div className="px-5 py-3 bg-blue-50 border-b border-blue-100 shrink-0">
-                <p className="text-[11px] text-blue-700 leading-relaxed">
-                  The AI agent updates these lessons automatically after each variant is scored by TRIBE v2. Patterns compound across iterations.
+              <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 shrink-0">
+                <p className="text-[10px] text-blue-700 leading-relaxed">
+                  Lessons update automatically after each TRIBE v2 scoring. Patterns compound across iterations.
                 </p>
               </div>
 
               {/* Lessons content */}
-              <div className="flex-1 overflow-y-auto px-5 py-4">
-                <div className="prose prose-sm max-w-none text-gray-700">
+              <div className="flex-1 overflow-y-auto px-4 py-3">
+                <div className="prose prose-sm max-w-none text-gray-700 text-xs">
                   <LessonsMarkdown text={campaign.lessonsMarkdown} />
                 </div>
               </div>
 
               {/* Teach — human writes a lesson */}
-              <div className="px-5 py-3 border-t border-gray-100 shrink-0">
-                <div className="flex items-center gap-1.5 mb-2">
+              <div className="px-4 py-2.5 border-t border-gray-100 shrink-0">
+                <div className="flex items-center gap-1.5 mb-1.5">
                   <Plus className="w-3 h-3 text-gray-400" />
-                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                  <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">
                     Teach the AI
                   </span>
                 </div>
@@ -913,13 +926,13 @@ Look up the campaign lessons and create an improved variant. Include your full r
                     value={teachText}
                     onChange={(e) => setTeachText(e.target.value)}
                     rows={2}
-                    className="flex-1 text-xs text-gray-700 leading-relaxed px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none"
+                    className="flex-1 text-[11px] text-gray-700 leading-relaxed px-2.5 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none"
                     placeholder="e.g. For architects, mention specific projects over awards..."
                   />
                   <button
                     onClick={handleTeachSubmit}
                     disabled={!teachText.trim() || teachSaving}
-                    className="self-end px-3 py-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors shrink-0"
+                    className="self-end px-2.5 py-1.5 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-semibold rounded-lg transition-colors shrink-0"
                   >
                     {teachSaving ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -931,14 +944,14 @@ Look up the campaign lessons and create an improved variant. Include your full r
               </div>
 
               {/* Footer */}
-              <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50 shrink-0">
-                <p className="text-[10px] text-gray-400">
+              <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 shrink-0">
+                <p className="text-[9px] text-gray-400">
                   {(campaign.lessonsMarkdown.match(/^## /gm) || []).length} insights ·
-                  AI + human lessons compound across iterations
+                  AI + human lessons compound
                 </p>
               </div>
             </div>
-          </>
+          </Rnd>
         )}
 
         {/* ── SEND TOAST ── */}

@@ -124,10 +124,10 @@ function Index() {
                     params: { id: firstCampaign._id },
                   })
                 }
-                className="bg-white/80 backdrop-blur-md border border-gray-200/80 rounded-2xl shadow-sm hover:shadow-lg hover:border-gray-300 cursor-pointer transition-all duration-300 overflow-hidden group"
+                className="bg-white/30 backdrop-blur-sm border border-gray-200/30 rounded-2xl shadow-sm hover:shadow-lg hover:border-gray-300/40 cursor-pointer transition-all duration-300 overflow-hidden group"
               >
                 {/* Card header */}
-                <div className="px-6 py-5 border-b border-gray-100/80">
+                <div className="px-6 py-5 border-b border-gray-100/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -178,7 +178,7 @@ function Index() {
                 </div>
 
                 {/* Clay badge */}
-                <div className="px-6 py-3 bg-gray-50/50 border-t border-gray-100/80 flex items-center gap-2">
+                <div className="px-6 py-3 bg-gray-50/20 border-t border-gray-100/30 flex items-center gap-2">
                   <div className="h-4 w-4 rounded bg-orange-500 flex items-center justify-center">
                     <div className="h-1.5 w-1.5 rounded-full bg-white" />
                   </div>

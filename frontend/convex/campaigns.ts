@@ -91,27 +91,34 @@ export const seedDemo = mutation({
       title: "Creative Branding Designer — Barcelona",
     });
 
-    // Pre-computed scores from TRIBE v2 (cached for instant demo startup)
-    const v1Scores = {
-      attention: -0.12, curiosity: -0.31, trust: -0.45,
-      motivation: -0.18, resistance: 0.52, overall: -1.58,
-    };
+    // Real GPU-computed scores from TRIBE v2 (persisted for instant demo startup)
     const v2Scores = {
-      attention: 0.28, curiosity: 0.41, trust: 0.35,
-      motivation: 0.22, resistance: 0.09, overall: 1.17,
+      attention: -0.06715946936359009, curiosity: -0.18446058691479267,
+      trust: -0.2897699903541555, motivation: -0.2231407934178909,
+      resistance: 0.5273130156487847, overall: -1.2918438556992138,
     };
     const v2_1Scores = {
-      attention: 0.45, curiosity: 0.62, trust: 0.51,
-      motivation: 0.38, resistance: -0.03, overall: 1.99,
+      attention: -0.06359056061754625, curiosity: -0.21466680926581222,
+      trust: -0.23450260370969772, motivation: -0.31094977623472614,
+      resistance: 0.32122842003901797, overall: -1.1449381698668004,
+    };
+    const v2_2Scores = {
+      attention: -0.03583796279361616, curiosity: -0.2445818515637746,
+      trust: -0.27006130358204244, motivation: -0.2940606236457825,
+      resistance: 0.5184704686013553, overall: -1.363012210186571,
+    };
+    const v3Scores = {
+      attention: -0.02490622649590174, curiosity: -0.17772886694098514,
+      trust: -0.24127262813660005, motivation: -0.2762402250431478,
+      resistance: 0.5111232074598471, overall: -1.2312711540764818,
     };
 
-    // Create root variant (v1) — archived, low scores
+    // Create root variant (v1) — archived, never scored
     const v1Id = await ctx.db.insert("variants", {
       sessionId,
       message:
         "Dear candidate,\n\nI came across your portfolio and wanted to reach out about an exciting opportunity. We are a growing creative studio in Barcelona looking for talented branding designers to join our team. I believe your experience would be a great asset.\n\nWould you be available for a brief call?\n\nBest regards",
-      status: "done",
-      scores: v1Scores,
+      status: "pending",
     });
 
     // Create child variant (v2) — references real work
@@ -124,7 +131,7 @@ export const seedDemo = mutation({
       scores: v2Scores,
     });
 
-    // Create child variant (v2.1) — references specific award
+    // Branch A from v2: references specific award (v2.1)
     const v2_1Id = await ctx.db.insert("variants", {
       sessionId,
       parentId: v2Id,
@@ -134,16 +141,29 @@ export const seedDemo = mutation({
       scores: v2_1Scores,
     });
 
-    // Archive v1 (keep scores visible for comparison)
-    await ctx.db.patch(v1Id, { status: "archived" });
+    // Branch B from v2: empathy-led approach (v2.2)
+    const v2_2Id = await ctx.db.insert("variants", {
+      sessionId,
+      parentId: v2Id,
+      message:
+        "Hey — I noticed your Discovery work isn't just pretty, it tells stories that hold people. That's the hardest thing in motion design. We're a small creative studio in Barcelona, and honestly we struggle to find people who care about narrative as much as craft. No agenda — just wondering if you'd be open to a 15-minute chat about what storytelling looks like in our world.",
+      status: "done",
+      scores: v2_2Scores,
+      hypothesis: "Empathy-led framing outperforms achievement-led framing",
+    });
 
-    // Also schedule GPU scoring to get full activations (brain viz) — non-blocking
-    await ctx.scheduler.runAfter(0, api.actions.scoreVariant, {
-      variantId: v2Id,
+    // Branch C from v1: curiosity-driven angle (v3)
+    const v3Id = await ctx.db.insert("variants", {
+      sessionId,
+      parentId: v1Id,
+      message:
+        "Quick question — have you ever worked on a project where the brand's visual identity had to evolve in real-time based on audience data? We're experimenting with that here in Barcelona and I keep running into the same wall: finding designers who think in systems. Your Vimeo reel suggests you might be one of them. Curious if that resonates at all.",
+      status: "done",
+      scores: v3Scores,
     });
-    await ctx.scheduler.runAfter(0, api.actions.scoreVariant, {
-      variantId: v2_1Id,
-    });
+
+    // Archive v1
+    await ctx.db.patch(v1Id, { status: "archived" });
 
     // Update session rootVariantId
     await ctx.db.patch(sessionId, { rootVariantId: v1Id });

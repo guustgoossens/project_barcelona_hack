@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ReactFlow,
   type Node,
@@ -17,7 +17,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { FlaskConical } from "lucide-react";
-import { toScore100 } from "../lib/scoring";
+import { toScore100, DISPLAY_SCALE } from "../lib/scoring";
 
 type Variant = Doc<"variants">;
 
@@ -169,12 +169,13 @@ function VariantNode({ data }: NodeProps) {
     selected: boolean;
     isBest: boolean;
   };
+  const [showHypTooltip, setShowHypTooltip] = useState(false);
   const isArchived = variant.status === "archived";
   const rawScore = variant.scores?.overall;
   const score = rawScore !== undefined ? toScore100(rawScore) : undefined;
   const isPositive = score !== undefined && score >= 50;
 
-  const norm = (v: number) => Math.max(0, Math.min(1, (v + 1) / 2));
+  const norm = (v: number) => Math.max(0, Math.min(1, (v + 1) / 2 * DISPLAY_SCALE));
 
   return (
     <>
@@ -185,7 +186,7 @@ function VariantNode({ data }: NodeProps) {
       />
       <div
         className={`
-          w-60 rounded-xl border bg-white overflow-hidden transition-all cursor-pointer
+          w-60 rounded-xl border bg-white transition-all cursor-pointer
           ${selected
             ? "border-blue-500 shadow-lg ring-2 ring-blue-200"
             : "border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300"
@@ -195,7 +196,7 @@ function VariantNode({ data }: NodeProps) {
       >
         {/* Score band */}
         <div
-          className={`px-3 py-2 flex items-center justify-between ${variant.status === "done" ? "node-scored" : ""}`}
+          className={`px-3 py-2 flex items-center justify-between rounded-t-xl ${variant.status === "done" ? "node-scored" : ""}`}
           style={{
             background: score === undefined
               ? "#F9FAFB"
@@ -250,15 +251,21 @@ function VariantNode({ data }: NodeProps) {
 
         {/* Hypothesis badge */}
         {variant.hypothesis && (
-          <div className="px-3 pb-2.5 group/hyp relative">
+          <div
+            className="px-3 pb-2.5 relative nopan"
+            onMouseEnter={() => setShowHypTooltip(true)}
+            onMouseLeave={() => setShowHypTooltip(false)}
+          >
             <div className="flex items-center gap-1 text-[10px] text-gray-400">
               <FlaskConical className="w-2.5 h-2.5 shrink-0" />
               <span className="truncate">{variant.hypothesis}</span>
             </div>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/hyp:block w-56 bg-gray-900 text-white text-[11px] leading-relaxed p-2.5 rounded-lg shadow-xl z-50 pointer-events-none">
-              <span className="font-semibold text-gray-300 block mb-0.5">Hypothesis</span>
-              {variant.hypothesis}
-            </div>
+            {showHypTooltip && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-56 bg-gray-900 text-white text-[11px] leading-relaxed p-2.5 rounded-lg shadow-xl z-50 pointer-events-none">
+                <span className="font-semibold text-gray-300 block mb-0.5">Hypothesis</span>
+                {variant.hypothesis}
+              </div>
+            )}
           </div>
         )}
       </div>

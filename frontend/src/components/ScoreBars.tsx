@@ -1,4 +1,4 @@
-import { toScore100 } from "../lib/scoring";
+import { toScore100, displayScore } from "../lib/scoring";
 
 export type Scores = {
   attention: number;
@@ -18,7 +18,7 @@ const ROWS: { key: keyof Scores; label: string; tone: "good" | "bad"; tip: strin
 ];
 
 function bar(v: number, tone: "good" | "bad") {
-  const pct = Math.max(0, Math.min(1, (v + 1) / 2)) * 100;
+  const pct = Math.min(100, Math.max(0, Math.min(1, (v + 1) / 2)) * 100 * 2.5);
   const gradient =
     tone === "good"
       ? "linear-gradient(to right, #10B981, #34D399)"
@@ -53,8 +53,10 @@ export default function ScoreBars({ scores, personaScores, leadName }: Props) {
         )}
       </div>
       {ROWS.map((r) => {
-        const displayed = personaScores ? personaScores[r.key] : scores[r.key];
-        const delta = personaScores ? personaScores[r.key] - scores[r.key] : null;
+        const raw = personaScores ? personaScores[r.key] : scores[r.key];
+        const displayed = displayScore(raw);
+        const rawDelta = personaScores ? personaScores[r.key] - scores[r.key] : null;
+        const delta = rawDelta !== null ? displayScore(rawDelta) : null;
         return (
           <div key={r.key}>
             <div className="flex justify-between mb-0.5">
@@ -71,7 +73,7 @@ export default function ScoreBars({ scores, personaScores, leadName }: Props) {
                 )}
               </span>
             </div>
-            {bar(displayed, r.tone)}
+            {bar(raw, r.tone)}
           </div>
         );
       })}
@@ -97,8 +99,8 @@ export default function ScoreBars({ scores, personaScores, leadName }: Props) {
                 <div className="text-[10px] font-semibold text-blue-600">Adjusted for {leadName}</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">
                   {ROWS.map((r) => {
-                    const d = personaScores ? personaScores[r.key] - scores[r.key] : 0;
-                    if (Math.abs(d) < 0.01) return null;
+                    const d = personaScores ? displayScore(personaScores[r.key] - scores[r.key]) : 0;
+                    if (Math.abs(d) < 0.025) return null;
                     return (
                       <span key={r.key} className="mr-2">
                         {r.label}{" "}
