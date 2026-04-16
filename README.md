@@ -8,7 +8,7 @@ and see which one lights up the brain — in 5 seconds, not 5 days.
 
 Don't spray and pray. **Spray and Clay.**
 
-> Built for Clay's "Signal over Noise" hackathon track.
+> Built for the Clay hackathon track.
 
 ## How it works
 
