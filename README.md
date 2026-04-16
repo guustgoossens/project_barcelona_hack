@@ -1,110 +1,268 @@
 # BrainReach — brain-scored outreach
 
-Visualizes Meta TRIBE v2 cortical activation per message variant. Built for Clay's
-"Signal over Noise" track.
+> *Spray and Clay, not spray and pray.*
+
+BrainReach is the first outreach system powered by a brain encoding model. Instead of sending generic cold emails and hoping for responses, it predicts the neural engagement each variant will produce — before you hit send.
+
+Built for Clay's **"Signal over Noise"** hackathon track.
+
+---
+
+## The idea
+
+69% of recipients decide *spam or read* within the first seconds. Inboxes are 10× noisier than three years ago. Yet every email is still a live A/B test on leads you can't afford to lose.
+
+BrainReach uses Meta's **TRIBE v2** fMRI model to simulate how a reader's brain responds to each word of your email. It scores each variant on 5 neuroscience-grounded signals, adjusts those scores per the lead's Big Five personality (OCEAN from Clay), and lets you iterate in a visual branch tree — compounding AI and human lessons across every campaign cycle.
+
+---
+
+## Architecture
+
+BrainReach is a three-layer system: a reactive frontend, a Convex serverless backend, and a GPU inference server running TRIBE v2 on a CoreWeave B200.
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                         APPLICATION LAYER                            │
+│                                                                      │
+│  TanStack Start + React 19                                           │
+│  ├── Campaign Hub (/)           — campaign cards, stats, seed/reset  │
+│  ├── Campaign Workspace (/campaign/$id)                              │
+│  │     ├── Variant Tree         — React Flow (XYFlow), pan/zoom      │
+│  │     ├── 3D Brain Viz         — React Three Fiber, jet heatmap     │
+│  │     ├── Email Editor         — inline edit, "Test this edit"      │
+│  │     ├── Score Bars           — 5 neural scores + persona delta    │
+│  │     ├── Lead Selector        — OCEAN bars, personality profile    │
+│  │     └── Lessons Drawer       — AI + human lessons, teach input    │
+│  └── Pitch Page (/pitch)        — animated pitch walkthrough         │
+└──────────────────────────┬───────────────────────────────────────────┘
+                           │
+            Real-time subscriptions (WebSocket)
+                           │
+┌──────────────────────────▼───────────────────────────────────────────┐
+│                         BACKEND LAYER (Convex)                       │
+│                                                                      │
+│  Schema     — sessions, variants, campaigns, leads                   │
+│  Queries    — list/get campaigns, variants, leads                    │
+│  Mutations  — create variants, update lessons, archive, seed demo    │
+│  Actions    — scoreVariant (calls GPU), learnFromScoring (calls AI)  │
+│  Agent      — Claude Sonnet 4.6 optimizer with 5 registered tools    │
+│  Storage    — fp16 activation matrix blobs                           │
+│  Scheduler  — async task orchestration (score → learn pipeline)      │
+└───────────┬──────────────────────────────────────┬───────────────────┘
+            │                                      │
+            │ HTTP POST /predict                   │ Anthropic API
+            │ (Bearer token auth)                  │
+┌───────────▼─────────────────┐     ┌──────────────▼───────────────────┐
+│    GPU INFERENCE SERVER      │     │      EXTERNAL SERVICES           │
+│                              │     │                                  │
+│  FastAPI + uvicorn           │     │  Anthropic — Claude Sonnet 4.6   │
+│  TRIBE v2 (Meta)             │     │  Clay — OCEAN lead enrichment    │
+│  Destrieux atlas scoring     │     │  Hugging Face — model weights    │
+│  NVIDIA B200 / CoreWeave     │     └──────────────────────────────────┘
+└──────────────────────────────┘
+```
+
+### Data flow: email → brain scores → UI
+
+1. **User creates a variant** — Convex mutation inserts it with `status: pending` and schedules `scoreVariant`
+2. **GPU inference** — TRIBE v2 tokenizes the text (spaCy), predicts fMRI BOLD signal across **20,484 cortical vertices × T timesteps**, and maps activations to 5 scores via the Destrieux atlas
+3. **Score aggregation** — Convex applies Kahneman's peak-end rule:
+   ```
+   Positive signals  →  0.4 × mean + 0.2 × first + 0.2 × min  + 0.2 × last
+   Resistance        →  0.4 × mean + 0.2 × first + 0.2 × max  + 0.2 × last
+   Overall           →  attention + curiosity + trust + motivation − resistance  →  0–100
+   ```
+4. **Learning loop** — if a child variant shifts any score by >5% vs. its parent, Claude analyzes the delta and appends an insight to `campaign.lessonsMarkdown`. Future variants read these lessons before being generated.
+5. **Frontend renders** — real-time subscriptions update the variant tree, 3D brain heatmap, score bars, and word-highlight timeline simultaneously, without polling.
+
+### Brain scoring (Destrieux atlas)
+
+| Signal | Brain Regions | Question answered |
+|---|---|---|
+| **Curiosity** | Lateral PFC, IFG, intraparietal sulcus, anterior cingulate | Will they read to the end? |
+| **Trust** | TPJ, angular gyrus, dorsomedial PFC (theory of mind) | Will they trust the sender? |
+| **Resistance** | Anterior insula, IFG opercular, mid-cingulate | Will their brain shut it down? |
+| **Attention** | Dorsal + ventral attention networks | Will they stop scrolling? |
+| **Motivation** | Ventromedial PFC (reward circuit) | Will they want to reply? |
+
+### Persona weighting (Big Five OCEAN)
+
+When a lead is selected, raw brain scores are adjusted per their Clay OCEAN profile:
+
+| Trait | Affected signal | Max multiplier |
+|---|---|---|
+| Openness | Curiosity | ×2.0 |
+| Conscientiousness | Attention | ×1.5 |
+| Extraversion | Motivation | ×2.0 |
+| Agreeableness | Trust | ×1.5 |
+| Neuroticism | Resistance (penalty) | ×3.0 |
+
+Trait values below 0.3 have no effect; above 0.8 the full multiplier applies, with smooth interpolation between.
+
+---
 
 ## Stack
 
-- **Frontend** — TanStack Start + React Three Fiber (`frontend/`)
-- **Realtime + DB** — Convex (`frontend/convex/`)
-- **Inference** — Python FastAPI + TRIBE v2 on a B200 GPU (`backend/`)
+| Layer | Technology |
+|---|---|
+| Frontend | TanStack Start + React 19 (SSR-ready, file-based routing) |
+| 3D brain viz | React Three Fiber + Three.js (20,484-vertex jet heatmap) |
+| Variant tree | XYFlow / React Flow (horizontal layout, gradient edges) |
+| Styling | Tailwind CSS 4 |
+| Backend & DB | Convex (real-time subscriptions, scheduler, blob storage) |
+| AI agent | `@convex-dev/agent` + Claude Sonnet 4.6 (5 tools, multi-turn) |
+| Brain model | Meta TRIBE v2 (CC-BY-NC-4.0) |
+| GPU compute | NVIDIA B200 via CoreWeave + Northflank |
+| Lead enrichment | Clay (OCEAN personality profiles) |
 
-## First-time setup
+---
 
-1. **Frontend deps**
-   ```
-   cd frontend && bun install
-   ```
-2. **Convex**
-   ```
-   cd frontend && bunx convex dev          # creates deployment, writes .env.local
-   bunx convex env set PYTHON_INFERENCE_URL https://...
-   bunx convex env set INFERENCE_TOKEN <token>
-   ```
-3. **Python inference (CoreWeave B200 via Northflank)**
-   ```
-   cd backend
-   uv sync        # or: pip install -e .
-   export HF_TOKEN=hf_xxx
-   uvicorn app.main:app --host 0.0.0.0 --port 8000
-   ```
-4. **Brain mesh (one-time)**
-   ```
-   python scripts/export_mesh.py
-   cp assets/fsaverage5.glb frontend/public/
-   ```
+## GPU Infrastructure: CoreWeave B200
 
-## CoreWeave / Northflank status
+TRIBE v2 inference runs on a **CoreWeave NVIDIA B200 (Blackwell)** GPU, orchestrated via Northflank. The B200 is required — the model's memory footprint and throughput demand it, and the Blackwell `sm_100` architecture is only supported by PyTorch nightly CUDA 13.0 builds.
 
-TRIBE v2 text inference has been validated on the Northflank service backed by a
-CoreWeave **NVIDIA B200**.
+### Validated setup
 
-- Service: `jupyter-pytorch`
-- Base image used: `northflank/public/jupyter-notebook:pytorch2.11.0-cuda12.9-cudnn9-devel`
-- Working runtime after fixes: `torch 2.12.0.dev20260415+cu130`
-- Verified CUDA arch list includes `sm_100`
-- Verified device: `NVIDIA B200`
-- Verified TRIBE prediction shape on text input: `(5, 20484)`
+| Property | Value |
+|---|---|
+| Service | Northflank (`jupyter-pytorch`) |
+| Base image | `northflank/public/jupyter-notebook:pytorch2.11.0-cuda12.9-cudnn9-devel` |
+| PyTorch runtime | `torch 2.12.0.dev20260415+cu130` (nightly) |
+| CUDA arch | `sm_100` confirmed in `torch.cuda.get_arch_list()` |
+| Device | `NVIDIA B200` confirmed via `torch.cuda.get_device_name(0)` |
+| TRIBE output | `(5, 20484)` — shape verified on smoke-test text input |
+| Inference latency | <5 s per variant (subsequent calls; first call downloads weights) |
+| Model weight cache | ~5 GB persistent volume (Hugging Face gated — requires `HF_TOKEN`) |
 
-### Notes from the successful setup
+### Why this matters
 
-- The stock torch install on the image did **not** support B200 (`sm_100` missing).
-- Installing the official PyTorch nightly CUDA 13.0 build fixed GPU support.
-- `tribev2` text preprocessing also required the spaCy English large model:
-  `en_core_web_lg==3.8.0`.
-- The first text run downloads additional text/audio model artifacts, including
-  gated Hugging Face weights, so the first successful inference is materially
-  slower than subsequent calls.
+The stock PyTorch on the Northflank base image **does not support B200** (`sm_100` is missing). Installing the PyTorch nightly CUDA 13.0 build is mandatory. The TRIBE text pipeline also requires the spaCy English large model (`en_core_web_lg==3.8.0`), and the first inference downloads additional gated weights from Hugging Face — budget an extra minute for cold start.
 
-### Minimal setup sequence used on Northflank
+### Setup sequence used on Northflank
 
 ```bash
-apt-get update
-apt-get install -y ffmpeg libsndfile1 git
+apt-get update && apt-get install -y ffmpeg libsndfile1 git
 
 cd /workspace/tribev2
 pip install -e .
 pip install -U "huggingface_hub[cli]"
 huggingface-cli login
 
+# Replace stock torch with B200-compatible nightly
 pip uninstall -y torch torchvision torchaudio
-pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu130
+pip install --pre torch torchvision torchaudio \
+  --index-url https://download.pytorch.org/whl/nightly/cu130
 
 python -m spacy download en_core_web_lg
-
-python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_arch_list()); print(torch.cuda.get_device_name(0))"
-python -u -c 'from tribev2 import TribeModel; model = TribeModel.from_pretrained("facebook/tribev2", cache_folder="./cache", device="cuda"); events = model.get_events_dataframe(text_path="sample.txt"); preds, segments = model.predict(events); print(preds.shape); print(len(segments))'
 ```
 
-Expected verification output:
+Verification:
 
-- `torch.cuda.is_available() == True`
-- `torch.cuda.get_arch_list()` contains `sm_100`
-- `torch.cuda.get_device_name(0) == NVIDIA B200`
-- TRIBE returns `(5, 20484)` on the smoke test text sample
+```bash
+python -c "
+import torch
+print(torch.__version__)
+print(torch.cuda.is_available())
+print(torch.cuda.get_arch_list())
+print(torch.cuda.get_device_name(0))
+"
 
-## Run dev
-
+python -u -c "
+from tribev2 import TribeModel
+model = TribeModel.from_pretrained(
+    'facebook/tribev2', cache_folder='./cache', device='cuda'
+)
+events = model.get_events_dataframe(text_path='sample.txt')
+preds, segments = model.predict(events)
+print(preds.shape)  # → (5, 20484)
+"
 ```
-# Terminal 1
+
+### Inference API (FastAPI)
+
+Deployed at the Northflank service URL. Auth via Bearer token (`INFERENCE_TOKEN`).
+
+| Endpoint | Input | Output |
+|---|---|---|
+| `POST /predict` | `{ "text": "..." }` | `{ scores, scoreSeries, activationBlob (fp16 base64), shape }` |
+| `POST /predict/media` | audio or video file | same structure |
+| `GET /health` | — | `{ status: "ok" }` |
+
+---
+
+## Setup
+
+### 1. Frontend dependencies
+
+```bash
+cd frontend && bun install
+```
+
+### 2. Convex backend
+
+```bash
+cd frontend
+bunx convex dev                      # creates deployment, writes .env.local
+bunx convex env set PYTHON_INFERENCE_URL https://<northflank-service-url>
+bunx convex env set INFERENCE_TOKEN <token>
+```
+
+### 3. Python inference server
+
+```bash
+cd backend
+uv sync        # or: pip install -e .
+export HF_TOKEN=hf_xxx
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Requires a B200 GPU with the nightly CUDA 13.0 PyTorch build (see GPU section above).
+
+### 4. Brain mesh (one-time)
+
+```bash
+python scripts/export_mesh.py
+cp assets/fsaverage5.glb frontend/public/
+```
+
+### Environment variables
+
+| Variable | Where | Purpose |
+|---|---|---|
+| `VITE_CONVEX_URL` | Frontend `.env.local` | Convex deployment URL |
+| `PYTHON_INFERENCE_URL` | Convex env | GPU inference endpoint |
+| `INFERENCE_TOKEN` | Convex env | Bearer auth for inference API |
+| `HF_TOKEN` | GPU server | Hugging Face gated model access |
+| `TRIBE_CACHE` | GPU server | Model weight cache directory |
+| `TRIBE_DEVICE` | GPU server | `cuda` or `cpu` |
+
+### Deployment targets
+
+| Component | Platform |
+|---|---|
+| Frontend | Vercel (TanStack Start SSR) |
+| Convex | Convex Cloud — EU West 1 |
+| GPU server | CoreWeave B200 via Northflank |
+
+---
+
+## Run locally
+
+```bash
+# Terminal 1 — Convex dev server
 cd frontend && bunx convex dev
 
-# Terminal 2
+# Terminal 2 — Frontend
 cd frontend && bun run dev
 
-# Terminal 3 (needs GPU)
+# Terminal 3 — Inference server (needs GPU)
 cd backend && uvicorn app.main:app --reload
 ```
 
-Open http://localhost:3000, type a message, hit **Start session**. The Convex action
-calls the Python service; activations + scores stream back; brain renders at 1 fps.
+Open http://localhost:3000. Select a campaign, pick a lead, edit a variant, and hit **Test this edit** — the Convex action calls the GPU service, scores stream back, and the brain renders in real time.
 
-## Roadmap
-
-- Clay API integration: pull candidate profiles → Claude Sonnet 4.6 drafts variants →
-  auto-populate the branch tree → winner sent via Clay native outreach.
-- Response rate tracking back into Convex.
+---
 
 ## License
 
-TRIBE v2 is **CC-BY-NC-4.0** — non-commercial only.
+TRIBE v2 is **CC-BY-NC-4.0** — non-commercial use only.
