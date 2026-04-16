@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Brain, Zap, Users, GitBranch } from "lucide-react";
+import { Brain, Zap, Users, GitBranch, ArrowRight } from "lucide-react";
 import { toScore100 } from "../lib/scoring";
+import NeuralBackground from "../components/ui/flow-field-background";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -14,7 +15,6 @@ function Index() {
   const seedDemo = useMutation(api.campaigns.seedDemo);
   const resetDemo = useMutation(api.campaigns.resetDemo);
 
-  // If we have a campaign, get real stats
   const firstCampaign = campaigns[0] ?? null;
   const leads =
     useQuery(
@@ -27,58 +27,106 @@ function Index() {
       firstCampaign?.sessionId ? { sessionId: firstCampaign.sessionId } : "skip",
     ) ?? [];
 
-  const scoredVariants = variants.filter((v: any) => v.status === "done");
-  const bestVariant = scoredVariants.reduce(
-    (best: any, v: any) =>
-      v.scores && (!best || v.scores.overall > best.scores.overall) ? v : best,
-    null,
-  );
+  const bestVariant = variants
+    .filter((v: any) => v.status === "done" && v.scores)
+    .reduce(
+      (best: any, v: any) =>
+        !best || v.scores.overall > best.scores.overall ? v : best,
+      null,
+    );
+
+  async function handleLaunch() {
+    const result = await seedDemo({});
+    if (result?.campaignId) {
+      navigate({ to: "/campaign/$id", params: { id: result.campaignId } });
+    }
+  }
 
   return (
-    <div className="min-h-[calc(100dvh-2.75rem)] bg-[#FAFAFA] flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-2xl">
-        {/* Hero */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
+    <div className="min-h-[calc(100dvh-2.75rem)] flex flex-col">
+      {/* ── HERO with neural background ── */}
+      <div className="relative h-[420px] shrink-0 overflow-hidden">
+        <NeuralBackground
+          color="#818cf8"
+          trailOpacity={0.08}
+          particleCount={500}
+          speed={0.6}
+          className="absolute inset-0"
+        />
+
+        {/* Content overlay */}
+        <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center">
+          <div className="flex items-center justify-center gap-3 mb-5">
             <div className="relative">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-                <Brain className="w-5 h-5 text-white" />
+              <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                <Brain className="w-6 h-6 text-indigo-300" />
               </div>
-              <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#FAFAFA] flex items-center justify-center">
-                <Zap className="w-2 h-2 text-white" />
+              <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 border-2 border-black flex items-center justify-center">
+                <Zap className="w-2.5 h-2.5 text-white" />
               </div>
             </div>
           </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+
+          <h1 className="text-5xl font-extrabold text-white tracking-tight">
             NeuralReach
           </h1>
-          <p className="text-gray-400 text-base mt-2 max-w-md mx-auto">
+          <p className="text-indigo-200/80 text-lg mt-3 max-w-lg mx-auto font-medium">
             Brain-scored outreach powered by Meta's TRIBE v2
           </p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-white/40 mt-2">
             Don't spray and pray.{" "}
-            <span className="font-semibold text-gray-700">Spray and Clay.</span>
+            <span className="font-semibold text-orange-400">Spray and Clay.</span>
           </p>
-        </div>
 
-        {/* Seed Demo state */}
-        {campaigns.length === 0 && (
-          <div className="flex flex-col items-center gap-4">
+          {/* Seed button */}
+          {campaigns.length === 0 && (
             <button
-              onClick={() => seedDemo({})}
-              className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl px-8 py-3 text-sm font-semibold shadow-sm transition-all hover:shadow-md"
+              onClick={handleLaunch}
+              className="mt-8 flex items-center gap-2 bg-white text-gray-900 hover:bg-indigo-50 rounded-xl px-7 py-3 text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-[1.02]"
             >
               Launch Demo Campaign
+              <ArrowRight className="w-4 h-4" />
             </button>
-            <p className="text-xs text-gray-400">
-              Seeds 8 real leads from Clay with OCEAN personality profiles
-            </p>
-          </div>
-        )}
+          )}
 
-        {/* Campaign card */}
-        {campaigns.length > 0 && firstCampaign && (
-          <>
+          {campaigns.length > 0 && (
+            <button
+              onClick={() =>
+                firstCampaign &&
+                navigate({
+                  to: "/campaign/$id",
+                  params: { id: firstCampaign._id },
+                })
+              }
+              className="mt-8 flex items-center gap-2 bg-white text-gray-900 hover:bg-indigo-50 rounded-xl px-7 py-3 text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-[1.02]"
+            >
+              Open Workspace
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Tech badges */}
+          <div className="flex items-center gap-3 mt-6">
+            <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium px-2.5 py-1 rounded-full border border-white/10">
+              TRIBE v2
+            </span>
+            <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium px-2.5 py-1 rounded-full border border-white/10">
+              Claude Sonnet 4.6
+            </span>
+            <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium px-2.5 py-1 rounded-full border border-white/10">
+              B200 GPU
+            </span>
+            <span className="text-[10px] text-orange-400/50 uppercase tracking-wider font-medium px-2.5 py-1 rounded-full border border-orange-400/20">
+              Clay
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── CAMPAIGN CARD (below hero) ── */}
+      {campaigns.length > 0 && firstCampaign && (
+        <div className="flex-1 bg-[#FAFAFA] px-6 py-8">
+          <div className="max-w-2xl mx-auto">
             <div
               onClick={() =>
                 navigate({
@@ -161,9 +209,18 @@ function Index() {
                 Reset & Reseed Demo
               </button>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seed state - no campaign yet */}
+      {campaigns.length === 0 && (
+        <div className="flex-1 bg-[#FAFAFA] flex items-center justify-center">
+          <p className="text-xs text-gray-400">
+            Seeds 8 real leads from Clay with OCEAN personality profiles
+          </p>
+        </div>
+      )}
     </div>
   );
 }
