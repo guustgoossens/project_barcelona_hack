@@ -93,7 +93,7 @@ function BrainMesh({
 export default function Brain(props: Props) {
   return (
     <Canvas
-      camera={{ position: [0, 0, 200], fov: 45 }}
+      camera={{ position: [0, 0, 300], fov: 45 }}
       dpr={[1, 1.5]}
       frameloop="always"
       gl={{ antialias: true }}
