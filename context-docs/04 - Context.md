@@ -49,7 +49,7 @@
 - **Anthropic + CoreWeave credits** (sponsors)
 - **Inference API**: `https://app--jupyter-pytorch--zr8brwblqp2q.code.run/predict`
 
-## Our Project — NeuralReach
+## Our Project — BrainReach
 
 **Track**: Clay — "Signal over Noise"
 

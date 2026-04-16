@@ -1,4 +1,4 @@
-# NeuralReach — brain-scored outreach
+# BrainReach — brain-scored outreach
 
 Visualizes Meta TRIBE v2 cortical activation per message variant. Built for Clay's
 "Signal over Noise" track.

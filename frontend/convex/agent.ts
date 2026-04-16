@@ -120,9 +120,9 @@ const createVariant = createTool({
 });
 
 export const optimizer: Agent = new Agent(components.agent, {
-  name: "NeuralReach Optimizer",
+  name: "BrainReach Optimizer",
   languageModel: anthropic("claude-sonnet-4-6"),
-  instructions: `You are the NeuralReach Optimizer — an outreach copywriting expert powered by neuroscience.
+  instructions: `You are the BrainReach Optimizer — an outreach copywriting expert powered by neuroscience.
 
 You help users write cold emails that maximize neural engagement. You have access to brain scores from Meta's TRIBE v2 model, which predicts cortical activation across 20,484 brain vertices.
 

@@ -2,7 +2,7 @@
 
 ## Name
 
-**NeuralReach**
+**BrainReach**
 
 ## Track
 
@@ -31,7 +31,7 @@ Instead of sending one generic email and hoping, we:
 ## Core UX: The Campaign Workspace
 
 ### Page 1: Campaign Hub (`/`)
-- Hero branding (NeuralReach logo, tagline, "Spray and Clay" slogan)
+- Hero branding (BrainReach logo, tagline, "Spray and Clay" slogan)
 - Single campaign card with real-time stats (leads, variants, best score)
 - Clay badge: "Leads enriched via Clay with OCEAN personality profiles"
 - Seed Demo / Reset & Reseed buttons

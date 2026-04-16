@@ -10,7 +10,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'NeuralReach — Brain-Scored Outreach' },
+      { title: 'BrainReach — Brain-Scored Outreach' },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),

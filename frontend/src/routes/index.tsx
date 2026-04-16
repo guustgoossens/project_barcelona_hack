@@ -71,7 +71,7 @@ function Index() {
             </div>
 
             <h1 className="text-5xl font-extrabold text-gray-900 tracking-tight">
-              NeuralReach
+              BrainReach
             </h1>
             <p className="text-gray-500 text-lg mt-3 max-w-lg mx-auto">
               Brain-scored outreach powered by Meta's TRIBE v2

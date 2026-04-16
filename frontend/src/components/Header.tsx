@@ -7,7 +7,7 @@ export default function Header() {
         <Link to="/" className="flex items-center gap-2 no-underline">
           <div className="h-2.5 w-2.5 rounded-full bg-blue-600" />
           <span className="text-sm font-bold text-gray-900 tracking-tight">
-            NeuralReach
+            BrainReach
           </span>
         </Link>
         <div className="flex items-center gap-3">

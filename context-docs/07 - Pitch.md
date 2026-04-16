@@ -19,7 +19,7 @@ Cold outreach is broken. Everyone is sending AI-generated emails that feel AI-ge
 ### 3. Live demo (90s)
 
 **Step 1 — Campaign Hub**
-Open NeuralReach. Show the campaign card with real stats: 8 leads, scored variants, best brain score. "Leads enriched via Clay with OCEAN personality profiles."
+Open BrainReach. Show the campaign card with real stats: 8 leads, scored variants, best brain score. "Leads enriched via Clay with OCEAN personality profiles."
 
 **Step 2 — The Tree**
 Click into the campaign. Show the variant evolution tree. "Each node is an email version. They branch, they get scored, the best survive."
@@ -98,7 +98,7 @@ Select best variant + lead → "Send to Diego via Clay" → toast: "Email sent v
 
 ## Clay Team Feedback (collected at hackathon)
 
-A Clay team member told us directly that **NeuralReach could go way beyond outreach** — into sales enablement, account management, and any written communication where you need to influence a decision.
+A Clay team member told us directly that **BrainReach could go way beyond outreach** — into sales enablement, account management, and any written communication where you need to influence a decision.
 
 Their exact framing: it's not just about cold emails. It's about **any moment where you need someone to say yes** — closing a deal, renewing a contract, getting buy-in from a stakeholder. Every GTM team writes hundreds of these messages a day and optimizes on gut feeling.
 
