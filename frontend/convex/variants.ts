@@ -43,8 +43,13 @@ export const createRoot = mutation({
 });
 
 export const createChild = mutation({
-  args: { parentId: v.id("variants"), message: v.string() },
-  handler: async (ctx, { parentId, message }) => {
+  args: {
+    parentId: v.id("variants"),
+    message: v.string(),
+    leadId: v.optional(v.id("leads")),
+    reasoning: v.optional(v.string()),
+  },
+  handler: async (ctx, { parentId, message, leadId, reasoning }) => {
     const parent = await ctx.db.get(parentId);
     if (!parent) throw new Error("parent not found");
     const variantId = await ctx.db.insert("variants", {
@@ -52,6 +57,8 @@ export const createChild = mutation({
       parentId,
       message,
       status: "pending",
+      ...(leadId ? { leadId } : {}),
+      ...(reasoning ? { reasoning } : {}),
     });
     await ctx.scheduler.runAfter(0, api.actions.scoreVariant, { variantId });
     return variantId;

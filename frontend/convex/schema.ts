@@ -11,6 +11,7 @@ export default defineSchema({
   variants: defineTable({
     sessionId: v.id("sessions"),
     parentId: v.optional(v.id("variants")),
+    leadId: v.optional(v.id("leads")),
     message: v.string(),
     status: v.union(
       v.literal("pending"),
@@ -43,6 +44,7 @@ export default defineSchema({
       }),
     ),
     error: v.optional(v.string()),
+    reasoning: v.optional(v.string()),
   })
     .index("by_session", ["sessionId"])
     .index("by_parent", ["parentId"]),
@@ -51,6 +53,7 @@ export default defineSchema({
     name: v.string(),
     sessionId: v.id("sessions"),
     lessonsMarkdown: v.string(),
+    agentThreadId: v.optional(v.string()),
   }),
 
   leads: defineTable({
