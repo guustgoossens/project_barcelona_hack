@@ -65,13 +65,16 @@ export const updateLessons = mutation({
 export const resetDemo = mutation({
   args: {},
   handler: async (ctx) => {
-    // Delete all leads, campaigns, variants, sessions
+    // Delete storage files referenced by variants first
+    for (const variant of await ctx.db.query("variants").collect()) {
+      if (variant.activationStorageId)
+        await ctx.storage.delete(variant.activationStorageId);
+      await ctx.db.delete(variant._id);
+    }
     for (const lead of await ctx.db.query("leads").collect())
       await ctx.db.delete(lead._id);
     for (const campaign of await ctx.db.query("campaigns").collect())
       await ctx.db.delete(campaign._id);
-    for (const variant of await ctx.db.query("variants").collect())
-      await ctx.db.delete(variant._id);
     for (const session of await ctx.db.query("sessions").collect())
       await ctx.db.delete(session._id);
   },
@@ -271,6 +274,11 @@ export const seedDemo = mutation({
       personalityArgs:
         "Independent Creative Director with 20+ brand clients (Danone, FC Barcelona, Casa Batlló, Vogue). Professor of Creativity at 8+ institutions including film academies and universities. Exceptionally high openness — uses mythology, poetry, and philosophy in commercial work. Champions LGBTQ+ inclusion and diversity through campaigns for AXEL HOTELS. Turns creative constraints into differentiators. Poetic, emotionally resonant communicator with lyrical, narrative-first style. Collaborative and credit-generous. Values creative liberty, human-centered storytelling, social inclusion, and educational mentorship.",
     });
+
+    // Schedule GPU scoring to get real brain activations
+    for (const variantId of [v2Id, v2_1Id, v2_2Id, v3Id]) {
+      await ctx.scheduler.runAfter(0, api.actions.scoreVariant, { variantId });
+    }
 
     return { campaignId, sessionId };
   },

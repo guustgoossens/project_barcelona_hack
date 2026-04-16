@@ -7,6 +7,77 @@ import { optimizer } from "./agent";
 import { createThread } from "@convex-dev/agent";
 import { components } from "./_generated/api";
 
+// --- Synthetic brain activation generation for demo seed ---
+
+const ACT_V = 20484;
+const ACT_T = 6;
+
+function mulberry32(seed: number) {
+  return () => {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function f32toFp16(v: number): number {
+  if (v === 0) return 0;
+  const sign = v < 0 ? 0x8000 : 0;
+  v = Math.abs(v);
+  if (v >= 65504) return sign | 0x7c00;
+  if (v < 6.1e-5) return sign | Math.round(v / 5.96e-8);
+  const e = Math.min(Math.floor(Math.log2(v)), 15);
+  return sign | ((e + 15) << 10) | (Math.round((v / 2 ** e - 1) * 1024) & 0x3ff);
+}
+
+function generateActivationBlob(seed: number): Blob {
+  const rand = mulberry32(seed);
+  const fp16 = new Uint16Array(ACT_T * ACT_V);
+  const nHot = 4 + Math.floor(rand() * 3);
+  const hotspots = Array.from({ length: nHot }, () => ({
+    center: Math.floor(rand() * ACT_V),
+    radius: 300 + Math.floor(rand() * 1200),
+    intensity: 0.3 + rand() * 0.7,
+    phaseOffset: rand() * Math.PI * 2,
+  }));
+  for (let t = 0; t < ACT_T; t++) {
+    const base = t * ACT_V;
+    for (let vi = 0; vi < ACT_V; vi++) {
+      let val = 0;
+      for (const h of hotspots) {
+        const dist = Math.abs(vi - h.center);
+        if (dist < h.radius) {
+          const falloff = 1 - dist / h.radius;
+          const wave = 0.5 + 0.5 * Math.sin((t / ACT_T) * Math.PI + h.phaseOffset);
+          val += h.intensity * falloff * falloff * wave;
+        }
+      }
+      val += rand() * 0.03;
+      fp16[base + vi] = f32toFp16(Math.max(0, val));
+    }
+  }
+  return new Blob([new Uint8Array(fp16.buffer)], { type: "application/octet-stream" });
+}
+
+export const seedActivations = internalAction({
+  args: {
+    variants: v.array(v.object({ id: v.id("variants"), seed: v.number() })),
+  },
+  handler: async (ctx, { variants }) => {
+    for (const { id, seed } of variants) {
+      const blob = generateActivationBlob(seed);
+      const storageId = await ctx.storage.store(blob);
+      await ctx.runMutation(api.variants.patchScoring, {
+        id,
+        status: "done" as const,
+        activationStorageId: storageId,
+      });
+    }
+  },
+});
+
 export const scoreVariant = action({
   args: { variantId: v.id("variants") },
   handler: async (ctx, { variantId }) => {
