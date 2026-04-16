@@ -47,9 +47,9 @@
 - [ ] **Connect Convex → GPU API**: `bunx convex env set PYTHON_INFERENCE_URL https://app--jupyter-pytorch--zr8brwblqp2q.code.run`
 - [ ] **Score variants before demo** — run `seedDemo`, wait for GPU scoring to complete on all 3 variants.
 - [ ] **Pre-cache brain data** — ensure all variants are scored and activations stored in Convex BEFORE the demo (no GPU latency on stage).
-- [ ] **Email variant generation with Claude** — currently emails are hardcoded in seed. Could use Anthropic API to generate variants dynamically.
-- [ ] **Actually send emails via Clay** — integrate Clay's outreach API to send the winning variant.
-- [ ] **Response tracking** — track open/reply rates and feed back into lessons.
+- [ ] **🔴 CRITICAL: Email variant generation with Claude** — currently emails are hardcoded in seed. Must integrate Anthropic API (Claude Sonnet 4.6) to generate variants dynamically based on the lead's profile + campaign context + lessons learned. When user clicks "Optimize" or "Branch", Claude generates a new variant informed by the lead's Big Five profile, the campaign lessons markdown, and the previous variant's brain scores. This is a core differentiator for the demo — shows the AI iteration loop is real, not scripted.
+- [ ] **🔴 CRITICAL: Actually send emails via Clay** — integrate Clay's outreach API to send the winning variant directly from the app. During the demo, after brain-scoring and selecting the best variant, click "Send via Clay" → email goes out to the real lead. If we can show "we sent this email during the demo and got a reply" → instant win. Even sending to a teammate pretending to be the lead counts. The judge signal is: this is a real product, not a prototype.
+- [ ] **Response tracking** — track open/reply rates and feed back into lessons. Lower priority but would complete the self-improving loop.
 
 ## Architecture
 
