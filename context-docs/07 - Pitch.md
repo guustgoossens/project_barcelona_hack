@@ -8,15 +8,52 @@
 
 > "Clay gives us the profiles. Claude writes 5 versions of the email. Then we do something nobody else does: we run each version through TRIBE v2 — Meta's open-source brain encoding model — and predict which one activates curiosity and openness in the recipient's neural pathways. We send that one. Not the best-written one. The one the brain responds to."
 
+---
+
+## Slides
+
+### Slide 1 — PROBLEM: "Outreach is broken"
+
+| 10x | 69% | 0 |
+|-----|-----|---|
+| more outreach in inboxes | judge on first impression | simulate before sending |
+| *Instantly Benchmark 2026* | *Smartlead Cold Email Stats* | *Industry standard* |
+
+Tools like Clay, Instantly, Apollo democratized outbound. Everyone sends personalized emails now. Top talent inboxes are 10x more crowded. 69% of recipients decide spam-or-read in seconds. And yet nobody simulates the brain response before hitting send. Every email is a live experiment on leads you can't afford to lose.
+
+### Slide 2 — SOLUTION: "Simulate the brain before you hit send"
+
+| 5s | x3 | ∞ |
+|----|----|----|
+| brain score per email | engagement rate | compound learning |
+| *B200 GPU inference* | *Backlinko 12M emails* | *AI + human lessons* |
+
+Don't spray and pray. **Spray and Clay.**
+
+### Slide 3 — ARCHITECTURE: "How It Works"
+
+```
+Clay (Leads + OCEAN) → Claude 4.6 (Variants) → TRIBE v2 (Brain scoring) → BrainReach (Iterate)
+
+Human teaches + AI learns = Compound loop
+```
+
+Tech: Meta TRIBE v2 · Anthropic Claude · NVIDIA B200 · Convex · Clay
+
+---
+
 ## The 2-Minute Demo
 
 ### 1. Hook (10s)
-The line. Let it land.
+"Outreach is broken." Show slide 1. Let the numbers land.
 
-### 2. Problem (15s)
-Cold outreach is broken. Everyone is sending AI-generated emails that feel AI-generated. Open rates are dying. The personalization is fake — it mentions someone's job title and calls it personal.
+### 2. Solution (10s)
+Show slide 2. "We simulate the brain before you hit send."
 
-### 3. Live demo (90s)
+### 3. Architecture (5s)
+Flash slide 3. "Clay leads, Claude variants, TRIBE v2 brain scoring, BrainReach to iterate."
+
+### 4. Live demo (90s)
 
 **Step 1 — Campaign Hub**
 Open BrainReach. Show the campaign card with real stats: 8 leads, scored variants, best brain score. "Leads enriched via Clay with OCEAN personality profiles."
@@ -44,32 +81,20 @@ Open the Lessons drawer. "4 lessons so far. The AI added a 5th after the last sc
 **Step 8 — Send**
 Select best variant + lead → "Send to Diego via Clay" → toast: "Email sent via Clay — Delivered to Diego Troiano at Dtmg.tv Studio."
 
-### 4. Technical reveal (20s)
-"TRIBE v2 is Meta's open-source brain encoding model, trained on 500+ hours of fMRI recordings. It predicts neural activity across 20,000 cortical vertices in response to text. We run it on a CoreWeave B200 — 180GB VRAM. Inference in under 5 seconds per email."
+### 5. Technical reveal (15s)
+"TRIBE v2 is Meta's open-source brain encoding model, trained on 500+ hours of fMRI recordings. It predicts neural activity across 20,000 cortical vertices. We run it on a CoreWeave B200. Inference in under 5 seconds."
 
-### 5. The scoring insight (15s)
-"We don't just average the brain response. We apply Kahneman's **peak-end rule**: your brain disproportionately remembers three things — the first impression, the worst moment, and the last thing you read. Our scoring weights all three. One bad sentence at the end of a perfect email? The score crashes. Because that's what the brain does."
-
-### 6. The learning loop (10s)
-"Every variant teaches the system something. The AI extracts lessons after each scoring — what worked, what didn't, mapped to brain regions. The human can teach it too. Both sources compound. Campaign 2 starts where campaign 1 left off."
-
-### 7. Business (10s)
-"Every GTM team is trying to personalize at scale. Nobody is scoring for what the brain actually retains. We're not optimizing for open rates — we're optimizing for neural memory before the email is sent."
-
-### 8. Close (5s)
+### 6. Close (5s)
 "We don't A/B test with click rates. We test with the human brain."
 
 ---
 
 ## Wow Moments
 
-1. **The brain heatmap changing in real time** as TRIBE evaluates each email variant. One version lights up green (curiosity). One version goes red (avoidance). Visual, visceral, unchallengeable.
-
-2. **Same email, different brain.** Click Diego → green. Click Massimo → resistance spikes. The personality makes the difference.
-
-3. **Human edits instantly scored.** Edit one sentence, click "Test this edit", new node appears with brain scores. Instant feedback loop.
-
-4. **The learning loop visible.** Open lessons, see them grow after each scoring, teach the AI, see it apply your lesson next time.
+1. **The brain heatmap changing in real time** — one version lights up green (curiosity), one goes red (avoidance). Visual, visceral, unchallengeable.
+2. **Same email, different brain.** Click Diego → green. Click Massimo → resistance spikes.
+3. **Human edits instantly scored.** Edit one sentence → new node → brain scores.
+4. **The learning loop visible.** Open lessons, see them grow, teach the AI, watch it apply your lesson.
 
 ---
 
@@ -77,35 +102,25 @@ Select best variant + lead → "Send to Diego via Clay" → toast: "Email sent v
 
 | Q | A |
 |---|---|
-| "Is there proof brain activation correlates with reply rates?" | "TRIBE explicitly models emotion and social cognition regions — the same regions that drive human decision to respond. And our scoring applies Kahneman's peak-end rule — the most replicated finding in behavioral memory research. We're combining neuroscience with behavioral economics." |
-| "Couldn't you just prompt engineer better?" | "Yes — and we do that too. TRIBE is the scoring layer on top of good prompting. Two levels of optimization." |
-| "What's the peak-end rule?" | "Kahneman & Fredrickson, 1993. People don't judge experiences by the average — they remember the peak (best or worst moment), the beginning, and the end. We weight our brain scores the same way: 40% mean, 20% first impression, 20% worst moment, 20% last impression. One toxic sentence tanks the score — exactly like it tanks your reply rate." |
+| "Is there proof brain activation correlates with reply rates?" | "TRIBE models emotion and social cognition regions — the same regions that drive the decision to respond. Our scoring applies Kahneman's peak-end rule — the most replicated finding in behavioral memory research." |
+| "Couldn't you just prompt engineer better?" | "Yes — and we do. TRIBE is the scoring layer on top of good prompting. Two levels of optimization." |
+| "What's the peak-end rule?" | "Kahneman 1993. People remember the peak, the beginning, and the end. We weight scores the same way: 40% mean, 20% first, 20% worst, 20% last." |
 | "How fast is inference?" | "Under 5 seconds per email on B200." |
-| "What does TRIBE actually output?" | "20,484 cortical vertex activation predictions per timestep. We aggregate the vertices mapped to curiosity, emotion, and social cognition regions via the Destrieux atlas." |
-| "Why Clay specifically?" | "Clay's database + enrichment gives us the signal to build accurate OCEAN personality profiles. The richer the persona, the more targeted the email variants." |
-| "How does the AI learn?" | "After each TRIBE scoring, the agent compares parent vs child scores. If there's a meaningful delta, it extracts a lesson — what changed, which scores moved, why. Humans can add their own observations too. Both sources are read before every optimization." |
-| "Can the human override the AI?" | "Yes — at every step. Edit the email inline, test your version, teach it a lesson, prune bad branches. The AI is a copilot, not an autopilot." |
+| "Why Clay specifically?" | "Clay gives us enriched OCEAN personality profiles. The richer the persona, the more targeted the brain scoring." |
+| "Can the human override the AI?" | "Yes — at every step. Edit inline, test your version, teach it a lesson, prune bad branches." |
 
 ---
 
-## Backup
+## Backup Plan
 
-- Screenshots of brain heatmaps if GPU is slow during demo
-- Pre-run all variants with scores saved
+- Pre-scored variants with brain activations cached (no GPU dependency during demo)
+- Screenshots of brain heatmaps if GPU is slow
 - Video of the full pipeline running (90s, on phone)
 
 ---
 
-## Clay Team Feedback (collected at hackathon)
+## Clay Team Feedback
 
-A Clay team member told us directly that **BrainReach could go way beyond outreach** — into sales enablement, account management, and any written communication where you need to influence a decision.
+A Clay team member said **BrainReach could go beyond outreach** — into sales enablement, account management, any written communication where you need a "yes."
 
-Their exact framing: it's not just about cold emails. It's about **any moment where you need someone to say yes** — closing a deal, renewing a contract, getting buy-in from a stakeholder. Every GTM team writes hundreds of these messages a day and optimizes on gut feeling.
-
-### Implications for the pitch
-
-This validates the "platform, not a feature" angle. When pitching to the Grand Jury:
-
-> "We built this for outreach, but the Clay team told us something we hadn't considered: every sales call follow-up, every contract renewal email, every investor update — they're all messages that need a 'yes.' TRIBE v2 scores all of them."
-
-This is the "this could be a company Monday morning" signal that Project Europe judges reward.
+> "We built this for outreach, but the Clay team told us: every sales follow-up, every contract renewal, every investor update — they all need a 'yes.' TRIBE v2 scores all of them."
