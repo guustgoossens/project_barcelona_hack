@@ -13,9 +13,6 @@ import HorizontalTree from "../components/HorizontalTree";
 import { fetchActivations, type ActivationMatrix } from "../lib/activations";
 import { applyPersonaWeights } from "../lib/persona";
 import {
-  FileText,
-  Brain as BrainIcon,
-  Users,
   GitBranch,
   RefreshCw,
   Scissors,
@@ -28,8 +25,6 @@ export const Route = createFileRoute("/campaign/$id")({
 
 const MESH_URL = "/fsaverage5.glb";
 const HEMISPHERE_SPLIT = 10242;
-
-type RightTab = "notes" | "brain" | "leads";
 
 function Campaign() {
   const { id } = Route.useParams();
@@ -48,7 +43,6 @@ function Campaign() {
   const [selectedVariantId, setSelectedVariantId] =
     useState<Id<"variants"> | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [rightTab, setRightTab] = useState<RightTab>("brain");
   const [windowOpen, setWindowOpen] = useState(false);
 
   // Click a node → open window
@@ -143,12 +137,6 @@ function Campaign() {
     );
   }
 
-  const TABS: { key: RightTab; label: string; icon: React.ReactNode }[] = [
-    { key: "notes", label: "Notes", icon: <FileText className="w-3.5 h-3.5" /> },
-    { key: "brain", label: "Brain", icon: <BrainIcon className="w-3.5 h-3.5" /> },
-    { key: "leads", label: "Leads", icon: <Users className="w-3.5 h-3.5" /> },
-  ];
-
   return (
     <div className="h-[calc(100dvh-2.75rem)] bg-[#FAFAFA] flex flex-col">
       {/* ── TOP BAR ── */}
@@ -188,20 +176,20 @@ function Campaign() {
           <>
             {/* Backdrop */}
             <div
-              className="absolute inset-0 bg-black/10 z-10"
+              className="absolute inset-0 bg-black/5 z-10"
               onClick={() => setWindowOpen(false)}
             />
 
             {/* Draggable + Resizable Window */}
             <Rnd
               default={{
-                x: Math.max(40, (window.innerWidth - 900) / 2),
-                y: 40,
-                width: 900,
-                height: 600,
+                x: Math.max(20, (window.innerWidth - 1050) / 2),
+                y: 30,
+                width: 1050,
+                height: 650,
               }}
-              minWidth={600}
-              minHeight={400}
+              minWidth={800}
+              minHeight={450}
               bounds="parent"
               dragHandleClassName="window-drag-handle"
               className="z-20"
@@ -209,30 +197,18 @@ function Campaign() {
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               <div className="w-full h-full bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
-                {/* ── macOS Title Bar (drag handle) ── */}
+                {/* macOS Title Bar */}
                 <div className="window-drag-handle flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 shrink-0 cursor-grab active:cursor-grabbing select-none">
-                  {/* Traffic lights */}
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => setWindowOpen(false)}
                       className="w-3 h-3 rounded-full bg-[#FF5F57] hover:brightness-90 transition-all"
-                      title="Close"
                     />
-                    <button
-                      className="w-3 h-3 rounded-full bg-[#FFBD2E] hover:brightness-90 transition-all"
-                      title="Minimize"
-                    />
-                    <button
-                      className="w-3 h-3 rounded-full bg-[#28C840] hover:brightness-90 transition-all"
-                      title="Maximize"
-                    />
+                    <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
+                    <div className="w-3 h-3 rounded-full bg-[#28C840]" />
                   </div>
-
-                  {/* Title */}
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-semibold text-gray-900">
-                      Draft Analysis
-                    </span>
+                    <span className="font-semibold text-gray-900">Draft Analysis</span>
                     {selectedVariant.scores && (
                       <span
                         className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
@@ -246,8 +222,6 @@ function Campaign() {
                       </span>
                     )}
                   </div>
-
-                  {/* Close */}
                   <button
                     onClick={() => setWindowOpen(false)}
                     className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
@@ -256,132 +230,134 @@ function Campaign() {
                   </button>
                 </div>
 
-                {/* ── Tab Bar ── */}
-                <div className="flex items-center gap-0 border-b border-gray-200 bg-gray-50/50 px-3 pt-1 shrink-0">
-                  {TABS.map((tab) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => setRightTab(tab.key)}
-                      className={`
-                        flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors relative
-                        ${
-                          rightTab === tab.key
-                            ? "bg-white text-gray-900 border border-gray-200 border-b-white -mb-px z-10"
-                            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100/50"
-                        }
-                      `}
-                    >
-                      {tab.icon}
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* ── Tab Content ── */}
-                <div className="flex-1 min-h-0 overflow-y-auto">
-                  {/* NOTES TAB */}
-                  {rightTab === "notes" && (
-                    <div className="p-6">
-                      <NotesView markdown={campaign.lessonsMarkdown} />
-                    </div>
-                  )}
-
-                  {/* BRAIN TAB */}
-                  {rightTab === "brain" && (
-                    <div className="flex flex-col h-full">
-                      {/* Email preview */}
-                      <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/30">
-                        <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-                          Email Draft
-                        </h4>
-                        <div className="text-sm text-gray-700 leading-relaxed max-h-24 overflow-y-auto">
-                          {selectedVariant.message && matrix ? (
-                            <WordStream
-                              message={selectedVariant.message}
-                              T={matrix.T}
-                              timestep={timestep}
-                            />
-                          ) : (
-                            <p className="whitespace-pre-wrap">{selectedVariant.message}</p>
-                          )}
-                        </div>
+                {/* 3-Column Layout */}
+                <div className="flex-1 flex min-h-0">
+                  {/* LEFT: Email + Lead */}
+                  <div className="w-[32%] border-r border-gray-200 overflow-y-auto shrink-0">
+                    <div className="p-4 border-b border-gray-100">
+                      <h4 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                        Email Draft
+                      </h4>
+                      <div className="text-sm text-gray-700 leading-relaxed">
+                        {selectedVariant.message && matrix ? (
+                          <WordStream
+                            message={selectedVariant.message}
+                            T={matrix.T}
+                            timestep={timestep}
+                          />
+                        ) : (
+                          <p className="whitespace-pre-wrap text-sm text-gray-600">
+                            {selectedVariant.message}
+                          </p>
+                        )}
                       </div>
-
-                      {/* Brain + Scores side by side */}
-                      <div className="flex-1 flex min-h-0">
-                        {/* Brain viz */}
-                        <div className="flex-1 flex flex-col min-h-0">
-                          <div className="flex-1 relative bg-[#0a0a0f] min-h-[240px]">
-                            {matrix ? (
-                              <div className="w-full h-full flex">
-                                <div className="flex-1">
-                                  <Brain
-                                    meshUrl={MESH_URL}
-                                    activations={matrix}
-                                    timestep={timestep}
-                                    showLeft={true}
-                                    showRight={true}
-                                    hemisphereSplit={HEMISPHERE_SPLIT}
+                    </div>
+                    <div className="p-4">
+                      <h4 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                        Lead
+                      </h4>
+                      <div className="flex flex-col gap-2">
+                        {leads.map((lead) => {
+                          const isSel = selectedLeadId === lead._id;
+                          return (
+                            <button
+                              key={lead._id}
+                              onClick={() => setSelectedLeadId(isSel ? null : lead._id)}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all ${
+                                isSel
+                                  ? "bg-blue-50 border border-blue-200"
+                                  : "bg-gray-50 border border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              <div className="w-7 h-7 rounded-full bg-gray-200 text-[10px] font-semibold text-gray-500 flex items-center justify-center shrink-0">
+                                {lead.name.split(" ").map((n: string) => n[0]).join("")}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-semibold text-gray-900 truncate">{lead.name}</div>
+                                <div className="text-[10px] text-gray-400 truncate">{lead.role}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {selectedLead && (
+                        <div className="mt-3 flex gap-1">
+                          {(["o", "c", "e", "a", "n"] as const).map((k, i) => {
+                            const colors = ["bg-purple-500", "bg-blue-500", "bg-amber-500", "bg-emerald-500", "bg-rose-500"];
+                            const labels = ["O", "C", "E", "A", "N"];
+                            return (
+                              <div key={k} className="flex-1 text-center">
+                                <div className="text-[8px] text-gray-400 mb-0.5">{labels[i]}</div>
+                                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${colors[i]}`}
+                                    style={{ width: `${selectedLead.ocean[k] * 100}%` }}
                                   />
                                 </div>
-                                <BrainLegend />
                               </div>
-                            ) : (
-                              <div className="absolute inset-0 flex items-center justify-center text-neutral-500 text-sm">
-                                {selectedVariant.status === "scoring"
-                                  ? "Scoring on GPU..."
-                                  : selectedVariant.status === "pending"
-                                    ? "Queued..."
-                                    : selectedVariant.status === "failed"
-                                      ? `Error: ${selectedVariant.error}`
-                                      : "Waiting for data..."}
-                              </div>
-                            )}
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CENTER: Brain + Timeline */}
+                  <div className="flex-1 flex flex-col min-h-0">
+                    <div className="flex-1 relative bg-[#F3F4F6] min-h-[240px]">
+                      {matrix ? (
+                        <div className="w-full h-full flex">
+                          <div className="flex-1">
+                            <Brain
+                              meshUrl={MESH_URL}
+                              activations={matrix}
+                              timestep={timestep}
+                              showLeft={true}
+                              showRight={true}
+                              hemisphereSplit={HEMISPHERE_SPLIT}
+                            />
                           </div>
-                          {matrix && full?.fps && (
-                            <div className="p-2.5 border-t border-gray-200">
-                              <Timeline
-                                T={matrix.T}
-                                fps={full.fps}
-                                hemodynamicOffsetS={full.hemodynamicOffsetS ?? 5}
-                                timestep={timestep}
-                                setTimestep={setTimestep}
-                              />
-                            </div>
-                          )}
+                          <BrainLegend />
                         </div>
-
-                        {/* Scores sidebar */}
-                        <div className="w-64 border-l border-gray-200 p-4 overflow-y-auto shrink-0">
-                          <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
-                            Brain Scores
-                          </h4>
-                          <ScoreBars
-                            scores={scores}
-                            personaScores={personaScores}
-                            leadName={selectedLead?.name}
-                          />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                          {selectedVariant.status === "scoring"
+                            ? "Scoring on GPU..."
+                            : selectedVariant.status === "pending"
+                              ? "Queued..."
+                              : selectedVariant.status === "failed"
+                                ? `Error: ${selectedVariant.error}`
+                                : "Waiting for data..."}
                         </div>
+                      )}
+                    </div>
+                    {matrix && full?.fps && (
+                      <div className="p-2 border-t border-gray-200 shrink-0">
+                        <Timeline
+                          T={matrix.T}
+                          fps={full.fps}
+                          hemodynamicOffsetS={full.hemodynamicOffsetS ?? 5}
+                          timestep={timestep}
+                          setTimestep={setTimestep}
+                        />
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
-                  {/* LEADS TAB */}
-                  {rightTab === "leads" && (
-                    <div className="p-6">
-                      <LeadsView
-                        leads={leads as any}
-                        selectedLeadId={selectedLeadId}
-                        onSelectLead={(lid) => {
-                          setSelectedLeadId(lid);
-                          if (lid) setRightTab("brain");
-                        }}
-                      />
-                    </div>
-                  )}
+                  {/* RIGHT: Scores */}
+                  <div className="w-[22%] border-l border-gray-200 p-4 overflow-y-auto shrink-0">
+                    <h4 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                      Brain Scores
+                    </h4>
+                    <ScoreBars
+                      scores={scores}
+                      personaScores={personaScores}
+                      leadName={selectedLead?.name}
+                    />
+                  </div>
                 </div>
 
-                {/* ── Action Bar ── */}
+                {/* Action Bar */}
                 <div className="border-t border-gray-200 px-4 py-3 flex items-center gap-2 bg-gray-50/50 shrink-0">
                   <button
                     onClick={() => selectedVariantId && mutate(selectedVariantId)}
@@ -399,9 +375,7 @@ function Campaign() {
                   </button>
                   {selectedVariant.status !== "archived" && (
                     <button
-                      onClick={() =>
-                        selectedVariantId && archive({ id: selectedVariantId })
-                      }
+                      onClick={() => selectedVariantId && archive({ id: selectedVariantId })}
                       className="flex items-center gap-1.5 px-3 py-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg text-sm transition-colors ml-auto"
                     >
                       <Scissors className="w-3.5 h-3.5" />
@@ -418,155 +392,3 @@ function Campaign() {
   );
 }
 
-/* ═══════════════════════════════════════════ */
-/*  Tab content components                     */
-/* ═══════════════════════════════════════════ */
-
-function NotesView({ markdown }: { markdown: string }) {
-  const html = simpleMarkdownToHtml(markdown);
-  return (
-    <div
-      className={[
-        "prose prose-sm max-w-none",
-        "[&_h1]:text-gray-900 [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mb-4",
-        "[&_h2]:text-gray-800 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2",
-        "[&_p]:text-gray-600 [&_p]:text-sm [&_p]:leading-relaxed",
-        "[&_strong]:text-gray-900",
-        "[&_code]:text-blue-700 [&_code]:bg-blue-50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono",
-        "[&_ul]:text-gray-600 [&_ul]:text-sm",
-        "[&_li]:text-gray-600",
-      ].join(" ")}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
-}
-
-const OCEAN_LABELS = [
-  { key: "o" as const, label: "Openness", color: "bg-purple-500" },
-  { key: "c" as const, label: "Conscientiousness", color: "bg-blue-500" },
-  { key: "e" as const, label: "Extraversion", color: "bg-amber-500" },
-  { key: "a" as const, label: "Agreeableness", color: "bg-emerald-500" },
-  { key: "n" as const, label: "Neuroticism", color: "bg-rose-500" },
-];
-
-function LeadsView({
-  leads,
-  selectedLeadId,
-  onSelectLead,
-}: {
-  leads: {
-    _id: string;
-    name: string;
-    role: string;
-    company: string;
-    ocean: { o: number; c: number; e: number; a: number; n: number };
-    confidence: number;
-    personalityArgs: string;
-  }[];
-  selectedLeadId: string | null;
-  onSelectLead: (id: string | null) => void;
-}) {
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-gray-500">
-        Select a lead to see persona-adjusted brain scores.
-      </p>
-      {leads.map((lead) => {
-        const isSel = selectedLeadId === lead._id;
-        return (
-          <div
-            key={lead._id}
-            onClick={() => onSelectLead(isSel ? null : lead._id)}
-            className={`rounded-xl border p-4 cursor-pointer transition-all duration-200 ${
-              isSel
-                ? "border-blue-500 bg-blue-50 shadow-md"
-                : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-            }`}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-sm font-semibold text-gray-900">
-                  {lead.name}
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {lead.role} @ {lead.company}
-                </div>
-              </div>
-              <span className="text-[11px] bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 font-medium">
-                {Math.round(lead.confidence * 100)}%
-              </span>
-            </div>
-
-            <div className="mt-3 space-y-1.5">
-              {OCEAN_LABELS.map((t) => (
-                <div key={t.key} className="flex items-center gap-2">
-                  <span className="text-[10px] text-gray-400 font-medium w-24 shrink-0">
-                    {t.label}
-                  </span>
-                  <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className={`h-1.5 rounded-full ${t.color} transition-all duration-300`}
-                      style={{ width: `${lead.ocean[t.key] * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-gray-400 font-mono w-6 text-right">
-                    {(lead.ocean[t.key] * 100).toFixed(0)}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-xs text-gray-400 mt-3 leading-relaxed">
-              {lead.personalityArgs}
-            </p>
-
-            <p className="text-xs font-medium mt-3">
-              {isSel ? (
-                <span className="text-blue-600">
-                  Active — switch to Brain tab for adjusted scores
-                </span>
-              ) : (
-                <span className="text-blue-600">
-                  Click to see brain reaction →
-                </span>
-              )}
-            </p>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ── Markdown helpers ── */
-
-function inlineFormat(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/`(.+?)`/g, "<code>$1</code>")
-    .replace(/\n/g, "<br/>");
-}
-
-function simpleMarkdownToHtml(md: string): string {
-  return md
-    .split("\n\n")
-    .map((block) => {
-      block = block.trim();
-      if (!block) return "";
-      if (block.startsWith("### "))
-        return `<h3>${inlineFormat(block.slice(4))}</h3>`;
-      if (block.startsWith("## "))
-        return `<h2>${inlineFormat(block.slice(3))}</h2>`;
-      if (block.startsWith("# "))
-        return `<h1>${inlineFormat(block.slice(2))}</h1>`;
-      if (block.split("\n").every((l) => l.trimStart().startsWith("- "))) {
-        const items = block
-          .split("\n")
-          .map((l) => `<li>${inlineFormat(l.trimStart().slice(2))}</li>`)
-          .join("");
-        return `<ul>${items}</ul>`;
-      }
-      return `<p>${inlineFormat(block)}</p>`;
-    })
-    .join("\n");
-}
